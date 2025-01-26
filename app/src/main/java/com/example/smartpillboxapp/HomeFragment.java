@@ -1,8 +1,6 @@
 package com.example.smartpillboxapp;
 
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,11 +47,45 @@ public class HomeFragment extends Fragment {
         btnEdit2 = view.findViewById(R.id.btnEdit2);
         btnEdit3 = view.findViewById(R.id.btnEdit3);
 
-        setupEditButton(btnEdit1, etData1Subtitle);
-        setupEditButton(btnEdit2, etData2Subtitle);
-        setupEditButton(btnEdit3, etData3Subtitle);
-
         updateDateTime();
+
+        // "Edit" buttons' click listeners
+        btnEdit1.setOnClickListener(v -> {
+            EditContainerInfoDialog dialogFragment = new EditContainerInfoDialog();
+            Bundle args = new Bundle();
+            args.putString("current_subtitle_1", etData1Subtitle.getText().toString());
+            dialogFragment.setArguments(args);
+            dialogFragment.show(getChildFragmentManager(), "EditContainerDialog");
+        });
+
+        btnEdit2.setOnClickListener(v -> {
+            EditContainerInfoDialog dialogFragment = new EditContainerInfoDialog();
+            Bundle args = new Bundle();
+            args.putString("current_subtitle_2", etData2Subtitle.getText().toString());
+            dialogFragment.setArguments(args);
+            dialogFragment.show(getChildFragmentManager(), "EditContainerDialog");
+        });
+
+        btnEdit3.setOnClickListener(v -> {
+            EditContainerInfoDialog dialogFragment = new EditContainerInfoDialog();
+            Bundle args = new Bundle();
+            args.putString("current_subtitle_3", etData3Subtitle.getText().toString());
+            dialogFragment.setArguments(args);
+            dialogFragment.show(getChildFragmentManager(), "EditContainerDialog");
+        });
+
+        // Retrieving data from dialog triggered by "Edit" buttons
+        getChildFragmentManager().setFragmentResultListener("requestKey", this, (requestKey, result) -> {
+            int editedFieldIndex = Integer.parseInt(result.getString("new_subtitle").substring(0,1));
+            String subtitle = result.getString("new_subtitle").substring(1);
+            if (editedFieldIndex == 1) {
+                etData1Subtitle.setText(subtitle);
+            } else if (editedFieldIndex == 2) {
+                etData2Subtitle.setText(subtitle);
+            } else if (editedFieldIndex == 3) {
+                etData3Subtitle.setText(subtitle);
+            }
+        });
 
         // Listen for Bluetooth data updates
         BluetoothManager bluetoothManager = BluetoothManager.getInstance(getContext());
@@ -95,14 +127,27 @@ public class HomeFragment extends Fragment {
 
     private void updateDateTime() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMM dd yyyy HH:mm", Locale.getDefault());
-        Handler handler = new Handler(Looper.getMainLooper());
-        handler.postDelayed(new Runnable() {
+        tvDateTime.postDelayed(new Runnable() {
             @Override
             public void run() {
                 String currentDateTime = dateFormat.format(new Date());
                 tvDateTime.setText(currentDateTime);
-                handler.postDelayed(this, 1000); // Update every second
+                tvDateTime.postDelayed(this, 1000); // Update every second
             }
         }, 0);
     }
+
+    public void updateSubtitle(String subtitle) {
+        // Update all subtitle fields as needed
+        if (etData1Subtitle != null) {
+            etData1Subtitle.setText(subtitle);
+        }
+        if (etData2Subtitle != null) {
+            etData2Subtitle.setText(subtitle);
+        }
+        if (etData3Subtitle != null) {
+            etData3Subtitle.setText(subtitle);
+        }
+    }
+
 }

@@ -21,6 +21,8 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
                 return new CalendarFragment();
             case 2:
                 return new SettingsFragment();
+            case 3:
+                return new EditContainerInfoDialog();
             default:
                 return new HomeFragment();
         }
