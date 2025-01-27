@@ -21,20 +21,23 @@ public class EditContainerInfoDialog extends DialogFragment {
     private EditText etOnePillWeight;
     private TextView tvTotalWeight;
     private TextView tvNumberOfPills;
-
     private Button btnMeasureWeight;
     private Button btnSaveWeight;
     private Button btnSaveAndReturn;
-
-    private double currentWeight; // Mocked Bluetooth weight
+    private double currentWeight;
     private double onePillWeight;
-
-    private FrameLayout viewPagerContainer;
-    private FrameLayout fragmentContainer;
-    private ViewPager2 viewPager;
+    private String current_subtitle;
     private SharedViewModel sharedViewModel;
+    private int edited_container_number = 0;
 
-    private int editedFieldIndex = 0;
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        Dialog dialog = super.onCreateDialog(savedInstanceState);
+        dialog.getWindow().setLayout(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
+        return dialog;
+    }
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         // Inflate the fragment's layout
@@ -52,18 +55,15 @@ public class EditContainerInfoDialog extends DialogFragment {
 
         // Load current subtitle from arguments
         if (getArguments() != null) {
-            String currentSubtitle = "";
-            if (getArguments().getString("current_subtitle_1") != null) {
-                currentSubtitle = getArguments().getString("current_subtitle_1");
-                editedFieldIndex = 1;
-            } else if (getArguments().getString("current_subtitle_2") != null) {
-                currentSubtitle = getArguments().getString("current_subtitle_2");
-                editedFieldIndex = 2;
-            } else if (getArguments().getString("current_subtitle_3") != null) {
-                currentSubtitle = getArguments().getString("current_subtitle_3");
-                editedFieldIndex = 3;
+            edited_container_number = Integer.parseInt(getArguments().getString("container_number"));
+            current_subtitle = getArguments().getString("current_subtitle");
+            onePillWeight = Double.parseDouble(getArguments().getString("one_pill_weight"));
+            etSubtitleEdit.setText(current_subtitle);
+            if(onePillWeight != -1.0){
+                etOnePillWeight.setText(Double.toString(onePillWeight));
+            } else {
+                etOnePillWeight.setText("");
             }
-            etSubtitleEdit.setText(currentSubtitle);
         }
 
         // Listen for Bluetooth data updates from Home Fragment
@@ -72,15 +72,19 @@ public class EditContainerInfoDialog extends DialogFragment {
         // Observe LiveData for updates
         sharedViewModel.getData().observe(getViewLifecycleOwner(), updatedData -> {
             tvTotalWeight.setText(updatedData);
+            currentWeight = Double.parseDouble(updatedData);
         });
 
         // Button to measure weight
-        btnMeasureWeight.setOnClickListener(v -> etOnePillWeight.setText(String.valueOf(currentWeight)));
+        btnMeasureWeight.setOnClickListener(v -> {
+            etOnePillWeight.setText(String.valueOf(currentWeight));
+            etOnePillWeight.setEnabled(true);
+        });
 
         // Button to save one pill weight
         btnSaveWeight.setOnClickListener(v -> {
             onePillWeight = Double.parseDouble(etOnePillWeight.getText().toString());
-            etOnePillWeight.setEnabled(false); // Make it uneditable
+            etOnePillWeight.setEnabled(false);
             updateWeightDisplay();
         });
 
@@ -88,7 +92,8 @@ public class EditContainerInfoDialog extends DialogFragment {
         btnSaveAndReturn.setOnClickListener(v -> {
             String subtitle = etSubtitleEdit.getText().toString();
             Bundle bundle = new Bundle();
-            bundle.putString("new_subtitle", editedFieldIndex + subtitle);
+            bundle.putString("subtitle", subtitle);
+            bundle.putString("new_one_pill_weight", String.valueOf(onePillWeight));
             getParentFragmentManager().setFragmentResult("requestKey", bundle);
             dismiss();
         });
@@ -96,29 +101,12 @@ public class EditContainerInfoDialog extends DialogFragment {
         return view;
     }
 
-    @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
-        Dialog dialog = super.onCreateDialog(savedInstanceState);
-        dialog.getWindow().setLayout(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
-        return dialog;
-    }
-
+    // Helper methods
     private void updateWeightDisplay() {
         tvTotalWeight.setText(String.format("%.2f", currentWeight));
         if (onePillWeight > 0) {
             double numberOfPills = currentWeight / onePillWeight;
             tvNumberOfPills.setText(String.format("%.0f", numberOfPills));
-        }
-    }
-
-    private void updateDataFields(String data) {
-        // Split data received from Bluetooth
-        String[] dataParts = data.split(";");
-
-        // Example logic to parse and update fields
-        if (dataParts.length >= 1) {
-            currentWeight = Double.parseDouble(dataParts[0]);
-            updateWeightDisplay();
         }
     }
 }
