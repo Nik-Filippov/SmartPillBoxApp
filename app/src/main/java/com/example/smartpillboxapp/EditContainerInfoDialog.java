@@ -12,6 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
 public class EditContainerInfoDialog extends DialogFragment {
@@ -31,6 +32,7 @@ public class EditContainerInfoDialog extends DialogFragment {
     private FrameLayout viewPagerContainer;
     private FrameLayout fragmentContainer;
     private ViewPager2 viewPager;
+    private SharedViewModel sharedViewModel;
 
     private int editedFieldIndex = 0;
     @Override
@@ -64,21 +66,12 @@ public class EditContainerInfoDialog extends DialogFragment {
             etSubtitleEdit.setText(currentSubtitle);
         }
 
-        // Listen for Bluetooth data updates
-        BluetoothManager bluetoothManager = BluetoothManager.getInstance(getContext());
-        bluetoothManager.setDataListener(new BluetoothManager.DataListener() {
-            @Override
-            public void onDataReceived(String data) {
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> updateDataFields(data));
-                }
-            }
+        // Listen for Bluetooth data updates from Home Fragment
+        sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
 
-            @Override
-            public void onConnected(String message) {}
-
-            @Override
-            public void onError(String error) {}
+        // Observe LiveData for updates
+        sharedViewModel.getData().observe(getViewLifecycleOwner(), updatedData -> {
+            tvTotalWeight.setText(updatedData);
         });
 
         // Button to measure weight

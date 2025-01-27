@@ -1,6 +1,8 @@
 package com.example.smartpillboxapp;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +13,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,6 +26,7 @@ public class HomeFragment extends Fragment {
     private TextView tvData1, tvData2, tvData3;
     private EditText etData1Subtitle, etData2Subtitle, etData3Subtitle;
     private Button btnEdit1, btnEdit2, btnEdit3;
+    private SharedViewModel sharedViewModel1;
 
     @Nullable
     @Override
@@ -87,12 +91,20 @@ public class HomeFragment extends Fragment {
             }
         });
 
+        // Send weight data to dialog
+        sharedViewModel1 = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
+
         // Listen for Bluetooth data updates
         BluetoothManager bluetoothManager = BluetoothManager.getInstance(getContext());
         bluetoothManager.setDataListener(new BluetoothManager.DataListener() {
             @Override
             public void onDataReceived(String data) {
-                requireActivity().runOnUiThread(() -> updateDataFields(data));
+                String[] dataParts = data.split(";");
+                Handler mainHandler = new Handler(Looper.getMainLooper()); // Ensure handler is associated with main Looper
+                mainHandler.post(() -> {
+                    updateDataFields(dataParts); // Safely update UI on the main thread
+                    sharedViewModel1.updateData(dataParts[0]);
+                });
             }
 
             @Override
@@ -105,19 +117,7 @@ public class HomeFragment extends Fragment {
         return view;
     }
 
-    private void setupEditButton(Button button, EditText editText) {
-        button.setOnClickListener(v -> {
-            boolean isEditable = editText.isEnabled();
-            editText.setEnabled(!isEditable);
-            button.setText(isEditable ? "Edit" : "Save");
-        });
-    }
-
-    private void updateDataFields(String data) {
-        // Split data by ';'
-        String[] dataParts = data.split(";");
-
-        // Ensure we have 3 parts
+    private void updateDataFields(String[] dataParts) {
         if (dataParts.length == 3) {
             tvData1.setText(dataParts[0]);
             tvData2.setText(dataParts[1]);
@@ -127,27 +127,14 @@ public class HomeFragment extends Fragment {
 
     private void updateDateTime() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMM dd yyyy HH:mm", Locale.getDefault());
-        tvDateTime.postDelayed(new Runnable() {
+        Handler handler = new Handler(); // Use Handler associated with the main Looper
+        handler.post(new Runnable() {
             @Override
             public void run() {
                 String currentDateTime = dateFormat.format(new Date());
-                tvDateTime.setText(currentDateTime);
-                tvDateTime.postDelayed(this, 1000); // Update every second
+                requireActivity().runOnUiThread(() -> tvDateTime.setText(currentDateTime)); // Ensure UI update on the main thread
+                handler.postDelayed(this, 1000); // Update every second
             }
-        }, 0);
+        });
     }
-
-    public void updateSubtitle(String subtitle) {
-        // Update all subtitle fields as needed
-        if (etData1Subtitle != null) {
-            etData1Subtitle.setText(subtitle);
-        }
-        if (etData2Subtitle != null) {
-            etData2Subtitle.setText(subtitle);
-        }
-        if (etData3Subtitle != null) {
-            etData3Subtitle.setText(subtitle);
-        }
-    }
-
 }
