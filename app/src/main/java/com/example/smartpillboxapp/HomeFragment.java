@@ -1,9 +1,10 @@
 package com.example.smartpillboxapp;
 
+import static java.lang.Math.round;
+
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -111,12 +112,22 @@ public class HomeFragment extends Fragment {
         bluetoothManager.setDataListener(new BluetoothManager.DataListener() {
             @Override
             public void onDataReceived(String data) {
-                String[] dataParts = data.split(";");
+                String[] dataPartsStr = data.split(";");
+                Double[] dataPartsDouble = new Double[dataPartsStr.length];
+                Integer[] numPills = new Integer[dataPartsStr.length];
+                Double[] onePillWeights = {onePillWeightContainer1, onePillWeightContainer2, onePillWeightContainer3};
+                for(int i = 0; i < dataPartsStr.length; i++){
+                    double weight = Double.parseDouble(dataPartsStr[i]);
+                    dataPartsDouble[i] = weight;
+                    numPills[i] = Math.toIntExact(round(weight / onePillWeights[i]));
+                }
                 Handler mainHandler = new Handler(Looper.getMainLooper());
                 mainHandler.post(() -> {
-                    updateDataFields(dataParts);
+                    // The line below displays weight instead of pill counts
+                    // updateDataFields(dataPartsDouble);
+                    updateDataFields(numPills);
                     if(edited_container_number != 0) {
-                        sharedViewModel.updateData(dataParts[edited_container_number - 1]);
+                        sharedViewModel.updateData(dataPartsStr[edited_container_number - 1]);
                     }
                 });
             }
@@ -132,11 +143,19 @@ public class HomeFragment extends Fragment {
     }
 
     // Helper methods
-    private void updateDataFields(String[] dataParts) {
+    private void updateDataFields(Double[] dataParts) {
         if (dataParts.length == 3) {
-            tvData1.setText(dataParts[0]);
-            tvData2.setText(dataParts[1]);
-            tvData3.setText(dataParts[2]);
+            tvData1.setText(Double.toString(dataParts[0]));
+            tvData2.setText(Double.toString(dataParts[1]));
+            tvData3.setText(Double.toString(dataParts[2]));
+        }
+    }
+
+    private void updateDataFields(Integer[] dataParts) {
+        if (dataParts.length == 3) {
+            tvData1.setText(Integer.toString(dataParts[0]));
+            tvData2.setText(Integer.toString(dataParts[1]));
+            tvData3.setText(Integer.toString(dataParts[2]));
         }
     }
 

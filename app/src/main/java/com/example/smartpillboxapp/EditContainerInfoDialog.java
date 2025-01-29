@@ -1,5 +1,7 @@
 package com.example.smartpillboxapp;
 
+import static java.lang.Math.round;
+
 import android.app.Dialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -13,7 +15,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.viewpager2.widget.ViewPager2;
 
 public class EditContainerInfoDialog extends DialogFragment {
 
@@ -105,8 +106,8 @@ public class EditContainerInfoDialog extends DialogFragment {
     private void updateWeightDisplay() {
         tvTotalWeight.setText(String.format("%.2f", currentWeight));
         if (onePillWeight > 0) {
-            double numberOfPills = currentWeight / onePillWeight;
-            tvNumberOfPills.setText(String.format("%.0f", numberOfPills));
+            int numberOfPills = Math.toIntExact(round(currentWeight / onePillWeight));
+            tvNumberOfPills.setText(Integer.toString(numberOfPills));
         }
     }
 }
