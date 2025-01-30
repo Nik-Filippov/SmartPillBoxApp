@@ -1,5 +1,7 @@
 package com.example.smartpillboxapp;
 
+import static java.lang.Math.round;
+
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -13,6 +15,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -21,10 +24,14 @@ import java.util.Locale;
 public class HomeFragment extends Fragment {
 
     private TextView tvDateTime;
-    private TextView tvData1Label, tvData2Label, tvData3Label;
     private TextView tvData1, tvData2, tvData3;
     private EditText etData1Subtitle, etData2Subtitle, etData3Subtitle;
     private Button btnEdit1, btnEdit2, btnEdit3;
+    private SharedViewModel sharedViewModel;
+    private int edited_container_number = 0;
+    private double onePillWeightContainer1 = -1;
+    private double onePillWeightContainer2 = -1;
+    private double onePillWeightContainer3 = -1;
 
     @Nullable
     @Override
@@ -32,10 +39,6 @@ public class HomeFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
         tvDateTime = view.findViewById(R.id.tvDateTime);
-
-        tvData1Label = view.findViewById(R.id.tvData1Label);
-        tvData2Label = view.findViewById(R.id.tvData2Label);
-        tvData3Label = view.findViewById(R.id.tvData3Label);
 
         tvData1 = view.findViewById(R.id.tvData1);
         tvData2 = view.findViewById(R.id.tvData2);
@@ -49,18 +52,84 @@ public class HomeFragment extends Fragment {
         btnEdit2 = view.findViewById(R.id.btnEdit2);
         btnEdit3 = view.findViewById(R.id.btnEdit3);
 
-        setupEditButton(btnEdit1, etData1Subtitle);
-        setupEditButton(btnEdit2, etData2Subtitle);
-        setupEditButton(btnEdit3, etData3Subtitle);
-
         updateDateTime();
+
+        // "Edit" buttons' click listeners
+        btnEdit1.setOnClickListener(v -> {
+            edited_container_number = 1;
+            EditContainerInfoDialog dialogFragment = new EditContainerInfoDialog();
+            Bundle args = new Bundle();
+            args.putString("container_number", String.valueOf(edited_container_number));
+            args.putString("current_subtitle", etData1Subtitle.getText().toString());
+            args.putString("one_pill_weight", String.valueOf(onePillWeightContainer1));
+            dialogFragment.setArguments(args);
+            dialogFragment.show(getChildFragmentManager(), "EditContainerDialog");
+        });
+
+        btnEdit2.setOnClickListener(v -> {
+            edited_container_number = 2;
+            EditContainerInfoDialog dialogFragment = new EditContainerInfoDialog();
+            Bundle args = new Bundle();
+            args.putString("container_number", String.valueOf(edited_container_number));
+            args.putString("current_subtitle", etData2Subtitle.getText().toString());
+            args.putString("one_pill_weight", String.valueOf(onePillWeightContainer2));
+            dialogFragment.setArguments(args);
+            dialogFragment.show(getChildFragmentManager(), "EditContainerDialog");
+        });
+
+        btnEdit3.setOnClickListener(v -> {
+            edited_container_number = 3;
+            EditContainerInfoDialog dialogFragment = new EditContainerInfoDialog();
+            Bundle args = new Bundle();
+            args.putString("container_number", String.valueOf(edited_container_number));
+            args.putString("current_subtitle", etData3Subtitle.getText().toString());
+            args.putString("one_pill_weight", String.valueOf(onePillWeightContainer3));
+            dialogFragment.setArguments(args);
+            dialogFragment.show(getChildFragmentManager(), "EditContainerDialog");
+        });
+
+        // Retrieving data from dialog triggered by "Edit" buttons
+        getChildFragmentManager().setFragmentResultListener("requestKey", this, (requestKey, result) -> {
+            String one_pill_weight = result.getString("new_one_pill_weight");
+            String subtitle = result.getString("subtitle");
+            if (edited_container_number == 1) {
+                etData1Subtitle.setText(subtitle);
+                onePillWeightContainer1 = Double.parseDouble(one_pill_weight);
+            } else if (edited_container_number == 2) {
+                etData2Subtitle.setText(subtitle);
+                onePillWeightContainer2 = Double.parseDouble(one_pill_weight);
+            } else if (edited_container_number == 3) {
+                etData3Subtitle.setText(subtitle);
+                onePillWeightContainer3 = Double.parseDouble(one_pill_weight);
+            }
+        });
+
+        // Send weight data to dialog
+        sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
 
         // Listen for Bluetooth data updates
         BluetoothManager bluetoothManager = BluetoothManager.getInstance(getContext());
         bluetoothManager.setDataListener(new BluetoothManager.DataListener() {
             @Override
             public void onDataReceived(String data) {
-                requireActivity().runOnUiThread(() -> updateDataFields(data));
+                String[] dataPartsStr = data.split(";");
+                Double[] dataPartsDouble = new Double[dataPartsStr.length];
+                Integer[] numPills = new Integer[dataPartsStr.length];
+                Double[] onePillWeights = {onePillWeightContainer1, onePillWeightContainer2, onePillWeightContainer3};
+                for(int i = 0; i < dataPartsStr.length; i++){
+                    double weight = Double.parseDouble(dataPartsStr[i]);
+                    dataPartsDouble[i] = weight;
+                    numPills[i] = Math.toIntExact(round(weight / onePillWeights[i]));
+                }
+                Handler mainHandler = new Handler(Looper.getMainLooper());
+                mainHandler.post(() -> {
+                    // The line below displays weight instead of pill counts
+                    // updateDataFields(dataPartsDouble);
+                    updateDataFields(numPills);
+                    if(edited_container_number != 0) {
+                        sharedViewModel.updateData(dataPartsStr[edited_container_number - 1]);
+                    }
+                });
             }
 
             @Override
@@ -73,36 +142,33 @@ public class HomeFragment extends Fragment {
         return view;
     }
 
-    private void setupEditButton(Button button, EditText editText) {
-        button.setOnClickListener(v -> {
-            boolean isEditable = editText.isEnabled();
-            editText.setEnabled(!isEditable);
-            button.setText(isEditable ? "Edit" : "Save");
-        });
+    // Helper methods
+    private void updateDataFields(Double[] dataParts) {
+        if (dataParts.length == 3) {
+            tvData1.setText(Double.toString(dataParts[0]));
+            tvData2.setText(Double.toString(dataParts[1]));
+            tvData3.setText(Double.toString(dataParts[2]));
+        }
     }
 
-    private void updateDataFields(String data) {
-        // Split data by ';'
-        String[] dataParts = data.split(";");
-
-        // Ensure we have 3 parts
+    private void updateDataFields(Integer[] dataParts) {
         if (dataParts.length == 3) {
-            tvData1.setText(dataParts[0]);
-            tvData2.setText(dataParts[1]);
-            tvData3.setText(dataParts[2]);
+            tvData1.setText(Integer.toString(dataParts[0]));
+            tvData2.setText(Integer.toString(dataParts[1]));
+            tvData3.setText(Integer.toString(dataParts[2]));
         }
     }
 
     private void updateDateTime() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMM dd yyyy HH:mm", Locale.getDefault());
-        Handler handler = new Handler(Looper.getMainLooper());
-        handler.postDelayed(new Runnable() {
+        Handler handler = new Handler();
+        handler.post(new Runnable() {
             @Override
             public void run() {
                 String currentDateTime = dateFormat.format(new Date());
-                tvDateTime.setText(currentDateTime);
-                handler.postDelayed(this, 1000); // Update every second
+                requireActivity().runOnUiThread(() -> tvDateTime.setText(currentDateTime));
+                handler.postDelayed(this, 1000);
             }
-        }, 0);
+        });
     }
 }
