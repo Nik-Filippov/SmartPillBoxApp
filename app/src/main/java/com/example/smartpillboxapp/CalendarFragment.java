@@ -1,6 +1,7 @@
 package com.example.smartpillboxapp;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -25,6 +26,7 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
     private TextView monthYearText;
     private RecyclerView calendarRecyclerView;
     private LocalDate selectedDate;
+    private AlertDialog.Builder builder;
 
     @Nullable
     @Override
@@ -91,8 +93,11 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
     @Override
     public void onItemClick(int position, String dayText) {
         if (!dayText.equals("")){
-            String message = "Selected Date " + dayText + " " + monthYearFromDate(selectedDate);
-            Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
+//            String message = "Selected Date " + dayText + " " + monthYearFromDate(selectedDate);
+//            Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
+            AddReminderDialog addReminderFragment = new AddReminderDialog();
+            Bundle args = new Bundle();
+            addReminderFragment.show(getChildFragmentManager(), "AddReminderDialog");
         }
     }
 }
