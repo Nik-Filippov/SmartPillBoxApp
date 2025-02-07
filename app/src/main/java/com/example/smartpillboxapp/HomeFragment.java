@@ -50,6 +50,16 @@ public class HomeFragment extends Fragment {
 
         sharedPreferences = requireActivity().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
+        tvDateTime = view.findViewById(R.id.tvDateTime);
+
+        tvData1 = view.findViewById(R.id.tvData1);
+        tvData2 = view.findViewById(R.id.tvData2);
+        tvData3 = view.findViewById(R.id.tvData3);
+
+        btnEdit1 = view.findViewById(R.id.btnEdit1);
+        btnEdit2 = view.findViewById(R.id.btnEdit2);
+        btnEdit3 = view.findViewById(R.id.btnEdit3);
+
         etData1Subtitle = view.findViewById(R.id.etData1Subtitle);
         etData2Subtitle = view.findViewById(R.id.etData2Subtitle);
         etData3Subtitle = view.findViewById(R.id.etData3Subtitle);
@@ -62,16 +72,6 @@ public class HomeFragment extends Fragment {
         onePillWeightContainer1 = parseDoubleOrDefault(sharedPreferences.getString(KEY_ONE_PILL_1, ""), -1);
         onePillWeightContainer2 = parseDoubleOrDefault(sharedPreferences.getString(KEY_ONE_PILL_2, ""), -1);
         onePillWeightContainer3 = parseDoubleOrDefault(sharedPreferences.getString(KEY_ONE_PILL_3, ""), -1);
-
-        tvDateTime = view.findViewById(R.id.tvDateTime);
-
-        tvData1 = view.findViewById(R.id.tvData1);
-        tvData2 = view.findViewById(R.id.tvData2);
-        tvData3 = view.findViewById(R.id.tvData3);
-
-        btnEdit1 = view.findViewById(R.id.btnEdit1);
-        btnEdit2 = view.findViewById(R.id.btnEdit2);
-        btnEdit3 = view.findViewById(R.id.btnEdit3);
 
         updateDateTime();
 
