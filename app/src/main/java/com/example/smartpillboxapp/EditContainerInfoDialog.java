@@ -84,7 +84,7 @@ public class EditContainerInfoDialog extends DialogFragment {
 
         // Button to save one pill weight
         btnSaveWeight.setOnClickListener(v -> {
-            onePillWeight = Double.parseDouble(etOnePillWeight.getText().toString());
+            onePillWeight = parseDoubleOrDefault(etOnePillWeight.getText().toString(), -1);
             etOnePillWeight.setEnabled(false);
             updateWeightDisplay();
         });
@@ -108,6 +108,17 @@ public class EditContainerInfoDialog extends DialogFragment {
         if (onePillWeight > 0) {
             int numberOfPills = Math.toIntExact(round(currentWeight / onePillWeight));
             tvNumberOfPills.setText(Integer.toString(numberOfPills));
+        }
+    }
+
+    private double parseDoubleOrDefault(String value, double defaultValue) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            return defaultValue;
         }
     }
 }
