@@ -17,4 +17,6 @@
     <string name="time">Add Time</string>
     <string name="save_return">Save and Return</string>
     <string name="recurrence">Add Recurrence</string>
+    <string name="container">Select Container</string>
+    <string name="reminderDot">•</string>
 </resources>

@@ -1,8 +1,7 @@
 package com.example.smartpillboxapp;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.os.Build;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -10,23 +9,27 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
-public class CalendarFragment extends Fragment implements CalendarAdapter.OnItemListener{
+public class CalendarFragment extends Fragment implements CalendarAdapter.OnItemListener, AddReminderDialog.ReminderInsertListener{
     private TextView monthYearText;
     private RecyclerView calendarRecyclerView;
     private LocalDate selectedDate;
-    private AlertDialog.Builder builder;
+    private DatabaseHelper dbHelper;
+
+    @Override
+    public void onReminderInserted() {
+        refreshCalendar(); // Refresh the calendar when a reminder is inserted
+    }
+
 
     @Nullable
     @Override
@@ -37,6 +40,7 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
+        dbHelper = new DatabaseHelper(getContext(), "PillReminderDatabase", null, 1); // Initialize it here
         calendarRecyclerView = view.findViewById(R.id.calendarRecyclerView);
         monthYearText = view.findViewById(R.id.monthYearTV);
         selectedDate = LocalDate.now();
@@ -59,14 +63,42 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
         setMonthView();
     }
 
+
     private void setMonthView() {
         monthYearText.setText(monthYearFromDate(selectedDate));
 
         ArrayList<String> daysInMonth = daysInMonthArray(selectedDate);
-        CalendarAdapter calendarAdapter = new CalendarAdapter(daysInMonth, this);
+        ArrayList<String> reminderDates = getReminderDatesForCalendar(selectedDate);
+
+        int currentMonth = selectedDate.getMonthValue(); // 1-based (January = 1)
+        int currentYear = selectedDate.getYear();
+
+        if (dbHelper == null) {
+            dbHelper = new DatabaseHelper(getContext(), "PillReminderDatabase", null, 1);
+        }
+
+        CalendarAdapter calendarAdapter = new CalendarAdapter(daysInMonth, reminderDates, this, dbHelper, currentMonth, currentYear);
         RecyclerView.LayoutManager layoutManager = new GridLayoutManager(requireActivity().getApplicationContext(), 7);
         calendarRecyclerView.setLayoutManager(layoutManager);
         calendarRecyclerView.setAdapter(calendarAdapter);
+    }
+
+    private ArrayList<String> getReminderDatesForCalendar(LocalDate date){
+        ArrayList<String> reminderDates = new ArrayList<>();
+        SQLiteDatabase db = new DatabaseHelper(getContext(), "PillReminderDatabase", null, 1).getReadableDatabase();
+        YearMonth yearMonth = YearMonth.from(date);
+
+        String monthString = date.format(DateTimeFormatter.ofPattern("yyyy-MM")); // Example: "2024-02"
+        String query = "SELECT DISTINCT date FROM PillReminder WHERE date LIKE '" + monthString + "%'";
+
+        Cursor cursor = db.rawQuery(query, null);
+        while (cursor.moveToNext()){
+            String fullDate = cursor.getString(0);
+            LocalDate reminderDate = LocalDate.parse(fullDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            reminderDates.add(String.valueOf(reminderDate.getDayOfMonth()));
+        }
+        cursor.close();
+        return reminderDates;
     }
 
     private ArrayList<String> daysInMonthArray(LocalDate date) {
@@ -100,4 +132,9 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
             addReminderFragment.show(getChildFragmentManager(), "AddReminderDialog");
         }
     }
+
+    public void refreshCalendar() {
+        setMonthView();
+    }
+
 }

@@ -27,6 +27,12 @@ android:padding="16dp">
         android:layout_height="65dp"
         android:hint="@string/recurrence" />
 
+    <Spinner
+        android:id="@+id/containerSpinner"
+        android:layout_width="match_parent"
+        android:layout_height="65dp"
+        android:hint="@string/container" />
+
     <Button
         android:id="@+id/dateButton"
         android:layout_width="match_parent"
