@@ -20,8 +20,10 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
             case 1:
                 return new CalendarFragment();
             case 2:
-                return new SettingsFragment();
+                return new TasksFragment();
             case 3:
+                return new SettingsFragment();
+            case 4:
                 return new EditContainerInfoDialog();
             default:
                 return new HomeFragment();
@@ -30,6 +32,6 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
 
     @Override
     public int getItemCount() {
-        return 3;
+        return 4;
     }
 }

@@ -52,40 +52,47 @@ class CalendarAdapter extends RecyclerView.Adapter<CalendarViewHolder>
         String day = daysOfMonth.get(position); // Day of the month (e.g., "1", "2", "3")
 
         if (!day.isEmpty()) {
-            // Convert to formatted date
             String formattedDate = getFormattedDate(year, month, Integer.parseInt(day));
-
-            // Set text
             holder.dayOfMonth.setText(day);
 
-            // Log the full date
-            Log.d("CalendarAdapter", "Date: " + formattedDate);
+            // Retrieve the pill name for the given date
+            String pillName = getPillNameForDate(formattedDate);
 
-            if (hasRemindersForDate(formattedDate)) {
-                holder.reminderDot.setVisibility(View.VISIBLE);
+            if (pillName != null && !pillName.isEmpty()) {
+                holder.pillTaskTextView.setText(pillName);
+                holder.pillTaskTextView.setVisibility(View.VISIBLE);  // Show the pill name
             } else {
-                holder.reminderDot.setVisibility(View.GONE);
+                holder.pillTaskTextView.setVisibility(View.GONE);  // Hide pill name if none
             }
         } else {
             holder.dayOfMonth.setText("");
-            holder.reminderDot.setVisibility(View.GONE);
+            holder.pillTaskTextView.setVisibility(View.GONE);
         }
     }
 
-    private boolean hasRemindersForDate(String date) {
-        Log.d("CalendarAdapter", "Passes Date: " + date);
+    private String getPillNameForDate(String date) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        String query = "SELECT * FROM PillReminder WHERE date = '" + date + "'";
-        Log.d("CalendarAdapter", "QUERY: " + query);
-        Cursor cursor = db.rawQuery(query, null);
+        ArrayList<String> pillNames = new ArrayList<>();
 
-        boolean hasReminder = false;
-        if (cursor.getCount() != 0) {
-            hasReminder = true;
+        String query = "SELECT pill_name FROM PillReminder WHERE date = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{date});
+
+        while (cursor.moveToNext()) {
+            String pillName = cursor.getString(cursor.getColumnIndexOrThrow("pill_name"));
+            pillNames.add(pillName);
         }
+
         cursor.close();
         db.close();
-        return hasReminder;
+
+        // Check if there are more than 3 items
+        if (pillNames.size() > 3) {
+            // Limit to the first 3 items and add "..." at the end
+            return String.join("\n", pillNames.subList(0, 3)) + "\n...";
+        } else {
+            // Return all pill names if there are 3 or fewer
+            return String.join("\n", pillNames);
+        }
     }
 
     private String getFormattedDate(int year, int month, int day) {

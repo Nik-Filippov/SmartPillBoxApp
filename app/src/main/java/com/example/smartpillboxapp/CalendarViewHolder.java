@@ -9,14 +9,14 @@ import androidx.recyclerview.widget.RecyclerView;
 public class CalendarViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener
 {
     public final TextView dayOfMonth;
-    public final TextView reminderDot;
+    public final TextView pillTaskTextView;
     private final CalendarAdapter.OnItemListener onItemListener;
 
     public CalendarViewHolder(@NonNull View itemView, CalendarAdapter.OnItemListener onItemListener)
     {
         super(itemView);
         dayOfMonth = itemView.findViewById(R.id.cellDayText);
-        reminderDot = itemView.findViewById(R.id.reminderDot);
+        pillTaskTextView = itemView.findViewById(R.id.pillTaskTextView);
         this.onItemListener = onItemListener;
         itemView.setOnClickListener(this);
     }
