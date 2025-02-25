@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +25,7 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
     private RecyclerView calendarRecyclerView;
     private LocalDate selectedDate;
     private DatabaseHelper dbHelper;
+    private SQLiteDatabase sqLiteDatabase;
 
     @Override
     public void onReminderInserted() {
@@ -40,10 +42,19 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
+        try{
+            dbHelper = new DatabaseHelper(this.getContext(), "PillReminderDatabase", null, 1);
+            sqLiteDatabase = dbHelper.getWritableDatabase();
+            sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS PillReminder(pill_name TEXT, pill_amount INT, container INT, date TEXT, time TEXT, recurrence TEXT)");
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
         dbHelper = new DatabaseHelper(getContext(), "PillReminderDatabase", null, 1); // Initialize it here
         calendarRecyclerView = view.findViewById(R.id.calendarRecyclerView);
         monthYearText = view.findViewById(R.id.monthYearTV);
         selectedDate = LocalDate.now();
+        Log.d("CalendarFragment", "Hello");
         setMonthView();
 
         // previous month button

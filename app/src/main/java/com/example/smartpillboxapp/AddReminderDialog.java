@@ -105,7 +105,7 @@ public class AddReminderDialog extends DialogFragment {
         try{
             dbHelper = new DatabaseHelper(this.getContext(), "PillReminderDatabase", null, 1);
             sqLiteDatabase = dbHelper.getWritableDatabase();
-            sqLiteDatabase.execSQL("CREATE TABLE PillReminder(pill_name TEXT, pill_amount INT, container INT, date TEXT, time TEXT, recurrence TEXT)");
+//            sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS PillReminder(pill_name TEXT, pill_amount INT, container INT, date TEXT, time TEXT, recurrence TEXT)");
         }
         catch(Exception e){
             e.printStackTrace();
