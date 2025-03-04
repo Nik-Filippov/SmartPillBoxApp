@@ -59,7 +59,7 @@ class CalendarAdapter extends RecyclerView.Adapter<CalendarViewHolder>
             holder.dayOfMonth.setText(day);
 
             // Log the full date
-            Log.d("CalendarAdapter", "Date: " + formattedDate);
+//            Log.d("CalendarAdapter", "Date: " + formattedDate);
 
             if (hasRemindersForDate(formattedDate)) {
                 holder.reminderDot.setVisibility(View.VISIBLE);
@@ -73,10 +73,10 @@ class CalendarAdapter extends RecyclerView.Adapter<CalendarViewHolder>
     }
 
     private boolean hasRemindersForDate(String date) {
-        Log.d("CalendarAdapter", "Passes Date: " + date);
+//        Log.d("CalendarAdapter", "Passes Date: " + date);
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         String query = "SELECT * FROM PillReminder WHERE date = '" + date + "'";
-        Log.d("CalendarAdapter", "QUERY: " + query);
+//        Log.d("CalendarAdapter", "QUERY: " + query);
         Cursor cursor = db.rawQuery(query, null);
 
         boolean hasReminder = false;

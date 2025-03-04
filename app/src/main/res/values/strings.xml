@@ -19,4 +19,5 @@
     <string name="recurrence">Add Recurrence</string>
     <string name="container">Select Container</string>
     <string name="reminderDot">•</string>
+    <string name="addPill">Add Pills</string>
 </resources>

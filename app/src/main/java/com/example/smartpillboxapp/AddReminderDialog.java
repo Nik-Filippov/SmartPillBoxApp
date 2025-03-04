@@ -18,6 +18,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 
@@ -38,12 +40,20 @@ public class AddReminderDialog extends DialogFragment {
     private String selectedContainer;
     private DatabaseHelper dbHelper;
     private SQLiteDatabase sqLiteDatabase;
-    private CalendarFragment calendarFragment;
+//    private CalendarFragment calendarFragment;
+    private static final String ARG_SELECTED_DATE = "selectedDate"; // Argument key
 
-
+    public static AddReminderDialog newInstance(String date) {
+        AddReminderDialog fragment = new AddReminderDialog();
+        Bundle args = new Bundle();
+        args.putString(ARG_SELECTED_DATE, date);
+        fragment.setArguments(args);
+        return fragment;
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState){
+
         View view = inflater.inflate(R.layout.add_reminder_dialog, container, false);
 
         pillNameEdit = view.findViewById(R.id.pillNameEdit);
@@ -59,6 +69,23 @@ public class AddReminderDialog extends DialogFragment {
         setRecurrenceSpinner();
         setPillCountSpinner();
         setContainerSpinner();
+
+        if (getArguments() != null) {
+            selectedDate = getArguments().getString(ARG_SELECTED_DATE);
+        }
+
+        if (selectedDate != null) {
+            dateButton.setText(selectedDate);
+        } else {
+            selectedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("MMMM d, yyyy"));
+            dateButton.setText(selectedDate);
+        }
+
+
+        if (selectedDate != null) {
+            Log.d("AddReminderDialog", "selectedDate: " + selectedDate);
+            dateButton.setText(selectedDate);
+        }
 
         dateButton.setOnClickListener(v -> {
             DatePickerFragment dateFragment = new DatePickerFragment();
@@ -105,7 +132,7 @@ public class AddReminderDialog extends DialogFragment {
         try{
             dbHelper = new DatabaseHelper(this.getContext(), "PillReminderDatabase", null, 1);
             sqLiteDatabase = dbHelper.getWritableDatabase();
-            sqLiteDatabase.execSQL("CREATE TABLE PillReminder(pill_name TEXT, pill_amount INT, container INT, date TEXT, time TEXT, recurrence TEXT)");
+//            sqLiteDatabase.execSQL("CREATE TABLE PillReminder(pill_name TEXT, pill_amount INT, container INT, date TEXT, time TEXT, recurrence TEXT)");
         }
         catch(Exception e){
             e.printStackTrace();
