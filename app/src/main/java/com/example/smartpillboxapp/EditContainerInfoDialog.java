@@ -60,7 +60,7 @@ public class EditContainerInfoDialog extends DialogFragment {
             current_subtitle = getArguments().getString("current_subtitle");
             onePillWeight = Double.parseDouble(getArguments().getString("one_pill_weight"));
             etSubtitleEdit.setText(current_subtitle);
-            if(onePillWeight != -1.0){
+            if(!Double.isNaN(onePillWeight)){
                 etOnePillWeight.setText(Double.toString(onePillWeight));
             } else {
                 etOnePillWeight.setText("");
@@ -74,6 +74,7 @@ public class EditContainerInfoDialog extends DialogFragment {
         sharedViewModel.getData().observe(getViewLifecycleOwner(), updatedData -> {
             tvTotalWeight.setText(updatedData);
             currentWeight = Double.parseDouble(updatedData);
+            updateWeightDisplay();
         });
 
         // Button to measure weight
@@ -86,7 +87,6 @@ public class EditContainerInfoDialog extends DialogFragment {
         btnSaveWeight.setOnClickListener(v -> {
             onePillWeight = Double.parseDouble(etOnePillWeight.getText().toString());
             etOnePillWeight.setEnabled(false);
-            updateWeightDisplay();
         });
 
         // Save and return to the previous screen
