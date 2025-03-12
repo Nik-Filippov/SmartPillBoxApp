@@ -1,8 +1,13 @@
 package com.example.smartpillboxapp;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,6 +28,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 public class AddReminderDialog extends DialogFragment {
 
@@ -41,6 +47,7 @@ public class AddReminderDialog extends DialogFragment {
     private String selectedContainer;
     private DatabaseHelper dbHelper;
     private SQLiteDatabase sqLiteDatabase;
+    private NotificationHelper notificationHelper;
 //    private CalendarFragment calendarFragment;
     private static final String ARG_SELECTED_DATE = "selectedDate"; // Argument key
 
@@ -70,6 +77,8 @@ public class AddReminderDialog extends DialogFragment {
         setRecurrenceSpinner();
         setPillCountSpinner();
         setContainerSpinner();
+
+        notificationHelper.createNotificationChannel(this.getContext());
 
         if (getArguments() != null) {
             selectedDate = getArguments().getString(ARG_SELECTED_DATE);
@@ -125,8 +134,10 @@ public class AddReminderDialog extends DialogFragment {
             Log.d("PillReminder", "Container: " + selectedContainer);
             Log.d("PillReminder", "Selected Date: " + selectedDate);
             Log.d("SelectedTime", "Selected Time: " + selectedTime);
+
             insertDatabase(view);
             readDatabase(view);
+
             dismiss();
         });
 
@@ -160,14 +171,13 @@ public class AddReminderDialog extends DialogFragment {
                 Log.e("Database", "Insert failed");
             } else {
                 Log.d("Database", "Insert successful");
-                Log.d("AddReminderDialog", "Parent Fragment: " + getParentFragment().toString());
                 // Notify parent fragment or activity
                 if (getParentFragment() instanceof ReminderInsertListener) {
-                    Log.d("AddReminderDialog", "In if getParentFragment()");
                     ((ReminderInsertListener) getParentFragment()).onReminderInserted();
                 }
             }
-            Log.d("AddReminderDiaglog", "storedDate: " + storedDate);
+            // Schedule the alarm for the reminder
+            setReminderAlarm(selectedPillName, storedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")), selectedTime, selectedPillCount);
             if (selectedRecurrence.equals("Daily")){
                 storedDate = storedDate.plusDays(1);
             }
@@ -184,23 +194,10 @@ public class AddReminderDialog extends DialogFragment {
     }
 
     public void readDatabase(View view){
-//        String query = "SELECT * FROM PillReminder WHERE date = '" + selectedDate + "'";
         ArrayList<String> pillReminders = new ArrayList<>();
         String query = "SELECT * FROM PillReminder";
-        Log.d("AddReminderDialog", "QUERY: " + query);
         try {
             Cursor cursor = sqLiteDatabase.rawQuery(query, null);
-//            LocalDate today = LocalDate.now();
-            while(cursor.moveToNext()) {
-                String pillName = cursor.getString(1);
-                int pillAmount = cursor.getInt(2);
-                int container = cursor.getInt(3);
-                String dateStr = cursor.getString(4);
-                String time = cursor.getString(5);
-                String recurrence = cursor.getString(6);
-//                LocalDate storedDate = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("MMMM d, yyyy"));
-//                LocalDate twoYearsFromStored = storedDate.plusYears(2);
-            }
             if (cursor.getCount() == 0) {
                 Log.d("Database", "No reminders found for the selected date.");
             } else {
@@ -258,5 +255,30 @@ public class AddReminderDialog extends DialogFragment {
 
     public interface ReminderInsertListener {
         void onReminderInserted();
+    }
+
+    public void setReminderAlarm(String pillName, String date, String time, String pillAmount) {
+        AlarmManager alarmManager = (AlarmManager) requireContext().getSystemService(Context.ALARM_SERVICE);
+
+        Intent intent = new Intent(requireContext(), PillReminderReceiver.class);
+        intent.putExtra("pill_name", pillName);
+        intent.putExtra("pill_amount", pillAmount);
+
+        // Convert date & time strings into Calendar object
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("MMMM d, yyyy hh:mm a", Locale.ENGLISH);
+        try {
+            calendar.setTime(sdf.parse(date + " " + time));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(requireContext(), (int) System.currentTimeMillis(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        // Set the alarm for the exact time
+        if (alarmManager != null) {
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+        }
     }
 }

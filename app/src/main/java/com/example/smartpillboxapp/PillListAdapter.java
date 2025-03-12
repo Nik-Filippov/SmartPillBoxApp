@@ -46,6 +46,11 @@ public class PillListAdapter extends RecyclerView.Adapter<PillListViewHolder> {
 
         String pill_recurrence = pill.getPillRecurrence();
 
+        if (pill.getPillName().equals("Pill List Empty")){
+            holder.itemView.setClickable(false);
+            holder.itemView.setAlpha(0.5f);
+        }
+
         if (pill_recurrence != null && (pill_recurrence.equals("Daily") || pill_recurrence.equals("Weekly") || pill_recurrence.equals("Monthly"))){
             holder.pillRecurrenceTextView.setVisibility(View.VISIBLE);
         }
