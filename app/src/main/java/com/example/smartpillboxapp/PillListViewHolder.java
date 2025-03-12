@@ -77,10 +77,24 @@ public class PillListViewHolder extends RecyclerView.ViewHolder implements View.
                         deleteBuilder.setTitle("Delete Option")
                                 .setMessage("Choose an option")
                                 .setPositiveButton("Delete this pill", ((dialog1, which1) -> {
-                                    deleteOnce(pillName, pillTime);
+                                    AlertDialog.Builder confirmDelete = new AlertDialog.Builder(context);
+                                    confirmDelete.setTitle("Are you sure you want to delete?")
+                                            .setNegativeButton("Delete", ((dialog2, which2) -> {
+                                                deleteOnce(pillName, pillTime);
+                                            }))
+                                            .setPositiveButton("Cancel", ((dialog2, which2) -> {dialog2.dismiss();}));
+                                    AlertDialog confirmDeleteDialog = confirmDelete.create();
+                                    confirmDeleteDialog.show();
                                 }))
                                 .setNegativeButton("Delete all recurring pills", ((dialog1, which1) -> {
-                                    deleteAll(pillName, pillTime, pillRecurrence);
+                                    AlertDialog.Builder confirmDelete = new AlertDialog.Builder(context);
+                                    confirmDelete.setTitle("Are you sure you want to delete?")
+                                            .setNegativeButton("Delete", ((dialog2, which2) -> {
+                                                deleteAll(pillName, pillTime, pillRecurrence);
+                                            }))
+                                            .setPositiveButton("Cancel", ((dialog2, which2) -> {dialog2.dismiss();}));
+                                    AlertDialog confirmDeleteDialog = confirmDelete.create();
+                                    confirmDeleteDialog.show();
                                 }))
                                 .setNeutralButton("Cancel", ((dialog1, which1) -> dialog1.dismiss()));
 
