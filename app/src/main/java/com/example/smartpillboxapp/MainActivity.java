@@ -38,9 +38,6 @@ public class MainActivity extends AppCompatActivity {
                     tab.setText("Calendar");
                     break;
                 case 2:
-                    tab.setText("Tasks");
-                    break;
-                case 3:
                     tab.setText("Settings");
                     break;
             }

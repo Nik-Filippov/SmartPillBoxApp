@@ -5,7 +5,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -15,25 +14,28 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
-public class CalendarFragment extends Fragment implements CalendarAdapter.OnItemListener, AddReminderDialog.ReminderInsertListener{
-    private TextView monthYearText, pillNameTextView, pillAmountTextView, pillTimeTextView;
+public class CalendarFragment extends Fragment implements CalendarAdapter.OnItemListener, AddReminderDialog.ReminderInsertListener, AdapterView.OnItemClickListener{
+    private TextView monthYearText, pillNameTextView, pillAmountTextView, pillTimeTextView, pillRecurrenceTextView;
     private RecyclerView calendarRecyclerView, pillListRecyclerView;
     private Button addPillsButton;
     private View dismissOverlay;
     private LocalDate selectedDate;
     private DatabaseHelper dbHelper;
     private SQLiteDatabase sqLiteDatabase;
-
+    private CalendarAdapter calendarAdapter;
     private String databaseDate;
+
+
+
 
     @Override
     public void onReminderInserted() {
@@ -55,7 +57,7 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
         try{
             dbHelper = new DatabaseHelper(this.getContext(), "PillReminderDatabase", null, 1);
             sqLiteDatabase = dbHelper.getWritableDatabase();
-            sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS PillReminder(pill_name TEXT, pill_amount INT, container INT, date TEXT, time TEXT, recurrence TEXT)");
+            sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS PillReminder(id INTEGER PRIMARY KEY AUTOINCREMENT, pill_name TEXT, pill_amount INT, container INT, date TEXT, time TEXT, recurrence TEXT)");
         }
         catch(Exception e){
             e.printStackTrace();
@@ -69,6 +71,8 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
         pillNameTextView = view.findViewById(R.id.pillNameTextView);
         pillAmountTextView = view.findViewById(R.id.pillAmountTextView);
         pillTimeTextView = view.findViewById(R.id.pillTimeTextView);
+        pillRecurrenceTextView = view.findViewById(R.id.pillRecurrenceTextView);
+
         pillListRecyclerView = view.findViewById(R.id.pillListRecyclerView);
         addPillsButton = view.findViewById(R.id.addPillsButton);
         dismissOverlay = view.findViewById(R.id.dismissOverlay);
@@ -93,6 +97,7 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
                 pillNameTextView.setVisibility(View.GONE);
                 pillAmountTextView.setVisibility(View.GONE);
                 pillTimeTextView.setVisibility(View.GONE);
+                pillRecurrenceTextView.setVisibility(View.GONE);
             }
         });
 
@@ -134,7 +139,7 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
             dbHelper = new DatabaseHelper(getContext(), "PillReminderDatabase", null, 1);
         }
 
-        CalendarAdapter calendarAdapter = new CalendarAdapter(daysInMonth, reminderDates, this, dbHelper, currentMonth, currentYear);
+        calendarAdapter = new CalendarAdapter(daysInMonth, reminderDates, this, dbHelper, currentMonth, currentYear);
         RecyclerView.LayoutManager layoutManager = new GridLayoutManager(requireActivity().getApplicationContext(), 7);
         calendarRecyclerView.setLayoutManager(layoutManager);
         calendarRecyclerView.setAdapter(calendarAdapter);
@@ -207,16 +212,16 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
         }
     }
 
-    private void showPillList(String date){
+    public void showPillList(String date){
         ArrayList<Pill> pillItems = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        String query = "SELECT pill_name, pill_amount, time FROM PillReminder WHERE date = '" + date + "'";
+        String query = "SELECT pill_name, pill_amount, time, recurrence FROM PillReminder WHERE date = '" + date + "'";
         Log.d("CalendarFragment", "Query: " + query);
         Cursor cursor = db.rawQuery(query, null);
 
         if (cursor.getCount() == 0){
             Log.d("CalendarFragment", "Pill Names is empty");
-            pillItems.add(new Pill("Pill List Empty", "", ""));
+            pillItems.add(new Pill("Pill List Empty", null, null, null));
         }
         else {
             while (cursor.moveToNext()) {
@@ -224,14 +229,12 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
                 String pill_name = cursor.getString(0);
                 int pill_amount = cursor.getInt(1);
                 String pill_time = cursor.getString(2);
-                pillItems.add(new Pill(pill_name, "Amount: " + pill_amount, pill_time));
+                String pill_recurrence = cursor.getString(3);
+                Log.d("CalendarFragment", "recurrence: " + pill_recurrence);
+                pillItems.add(new Pill(pill_name, "Amount: " + pill_amount, pill_time, pill_recurrence));
             }
         }
         cursor.close();
-
-        for (int i = 0; i < pillItems.size(); i++){
-            Log.d("CalendarFragment", "Pill Name: " + pillItems.get(i));
-        }
 
         // setting visibilities of pill list recycler view
         pillListRecyclerView.setVisibility(View.VISIBLE);
@@ -239,18 +242,26 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
         pillNameTextView.setVisibility(View.VISIBLE);
         pillAmountTextView.setVisibility(View.VISIBLE);
         pillTimeTextView.setVisibility(View.VISIBLE);
+
+        pillRecurrenceTextView.setVisibility(View.VISIBLE);
 //        pillListTextView.setVisibility(View.VISIBLE);
         View dismissOverlay = getView().findViewById(R.id.dismissOverlay);
         dismissOverlay.setVisibility(View.VISIBLE);
 
         // setting adapter to list out pill names
-        PillListAdapter adapter = new PillListAdapter(pillItems);
+        PillListAdapter adapter = new PillListAdapter(pillItems, (AdapterView.OnItemClickListener) this, this.getContext(), date, dbHelper, calendarAdapter);
         pillListRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         pillListRecyclerView.setAdapter(adapter);
+        Log.d("CalendarFragment", "Time: " + pillTimeTextView.getText().toString());
+        Log.d("CalendarFragment", "Recurrence: " + pillRecurrenceTextView.getText().toString());
+
+
     }
 
     public void refreshCalendar() {
         setMonthView();
     }
 
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {}
 }

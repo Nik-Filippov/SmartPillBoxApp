@@ -22,6 +22,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 
 public class AddReminderDialog extends DialogFragment {
 
@@ -144,31 +145,62 @@ public class AddReminderDialog extends DialogFragment {
 
     public void insertDatabase(View view){
         ContentValues contentValues = new ContentValues();
-        contentValues.put("pill_name", selectedPillName);
-        contentValues.put("pill_amount", Integer.parseInt(selectedPillCount));
-        contentValues.put("container", Integer.parseInt(selectedContainer));
-        contentValues.put("date", selectedDate);
-        contentValues.put("time", selectedTime);
-        contentValues.put("recurrence", selectedRecurrence);
-        long result = sqLiteDatabase.insert("PillReminder", null, contentValues);
-        if (result == -1) {
-            Log.e("Database", "Insert failed");
-        } else {
-            Log.d("Database", "Insert successful");
-            Log.d("AddReminderDialog", "Parent Fragment: " + getParentFragment().toString());
-            // Notify parent fragment or activity
-            if (getParentFragment() instanceof ReminderInsertListener) {
-                Log.d("AddReminderDialog", "In if getParentFragment()");
-                ((ReminderInsertListener) getParentFragment()).onReminderInserted();
+        LocalDate storedDate = LocalDate.parse(selectedDate, DateTimeFormatter.ofPattern("MMMM d, yyyy"));
+        LocalDate endDate = storedDate.plusYears(2); // Two years from stored date
+
+        while(!storedDate.isAfter(endDate)) {
+            contentValues.put("pill_name", selectedPillName);
+            contentValues.put("pill_amount", Integer.parseInt(selectedPillCount));
+            contentValues.put("container", Integer.parseInt(selectedContainer));
+            contentValues.put("date", storedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")));
+            contentValues.put("time", selectedTime);
+            contentValues.put("recurrence", selectedRecurrence);
+            long result = sqLiteDatabase.insert("PillReminder", null, contentValues);
+            if (result == -1) {
+                Log.e("Database", "Insert failed");
+            } else {
+                Log.d("Database", "Insert successful");
+                Log.d("AddReminderDialog", "Parent Fragment: " + getParentFragment().toString());
+                // Notify parent fragment or activity
+                if (getParentFragment() instanceof ReminderInsertListener) {
+                    Log.d("AddReminderDialog", "In if getParentFragment()");
+                    ((ReminderInsertListener) getParentFragment()).onReminderInserted();
+                }
+            }
+            Log.d("AddReminderDiaglog", "storedDate: " + storedDate);
+            if (selectedRecurrence.equals("Daily")){
+                storedDate = storedDate.plusDays(1);
+            }
+            else if (selectedRecurrence.equals("Weekly")){
+                storedDate = storedDate.plusWeeks(1);
+            }
+            else if (selectedRecurrence.equals("Monthly")) {
+                storedDate = storedDate.plusMonths(1);
+            }
+            else {
+                return;
             }
         }
     }
 
     public void readDatabase(View view){
-        String query = "SELECT * FROM PillReminder WHERE date = '" + selectedDate + "'";
+//        String query = "SELECT * FROM PillReminder WHERE date = '" + selectedDate + "'";
+        ArrayList<String> pillReminders = new ArrayList<>();
+        String query = "SELECT * FROM PillReminder";
         Log.d("AddReminderDialog", "QUERY: " + query);
         try {
             Cursor cursor = sqLiteDatabase.rawQuery(query, null);
+//            LocalDate today = LocalDate.now();
+            while(cursor.moveToNext()) {
+                String pillName = cursor.getString(1);
+                int pillAmount = cursor.getInt(2);
+                int container = cursor.getInt(3);
+                String dateStr = cursor.getString(4);
+                String time = cursor.getString(5);
+                String recurrence = cursor.getString(6);
+//                LocalDate storedDate = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("MMMM d, yyyy"));
+//                LocalDate twoYearsFromStored = storedDate.plusYears(2);
+            }
             if (cursor.getCount() == 0) {
                 Log.d("Database", "No reminders found for the selected date.");
             } else {
@@ -182,6 +214,7 @@ public class AddReminderDialog extends DialogFragment {
                 }
             }
             cursor.close();
+
         }
         catch(Exception e){
             e.printStackTrace();

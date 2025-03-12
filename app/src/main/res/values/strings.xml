@@ -20,4 +20,6 @@
     <string name="container">Select Container</string>
     <string name="reminderDot">•</string>
     <string name="addPill">Add Pills</string>
+    <string name="deletePill">Delete Pill</string>
+    <string name="editPill">Edit Pill</string>
 </resources>

@@ -106,4 +106,25 @@ class CalendarAdapter extends RecyclerView.Adapter<CalendarViewHolder>
 
         void onReminderInserted();
     }
+
+    public void updateReminderDots() {
+        refreshReminderDates();  // Refresh the list of reminder dates
+        notifyDataSetChanged();
+    }
+
+    // Fetch latest reminder dates from database
+    private void refreshReminderDates() {
+        reminderDates.clear();  // Clear old data
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT DISTINCT date FROM PillReminder", null);
+
+        while (cursor.moveToNext()) {
+            reminderDates.add(cursor.getString(0));  // Add updated dates
+        }
+
+        cursor.close();
+        db.close();
+    }
+
+
 }
