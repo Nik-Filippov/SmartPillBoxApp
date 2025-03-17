@@ -5,20 +5,25 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@color/lightGreenBackground"
     tools:context=".MainActivity">
 
     <!-- Calendar Layout -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:background="@drawable/rounded_box"
+        android:padding="16dp">
 
+        <!-- Month Navigation Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="20dp"
-            android:layout_marginTop="20dp">
+            android:layout_marginBottom="16dp"
+            android:layout_marginTop="16dp">
 
             <Button
                 android:id="@+id/previous_month"
@@ -55,10 +60,12 @@
                 android:textSize="20sp"/>
         </LinearLayout>
 
+        <!-- Weekday Labels -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -67,7 +74,8 @@
                 android:text="SUN"
                 android:textColor="@color/black"
                 android:textAlignment="center"
-                android:textSize="16sp"/>
+                android:textSize="16sp"
+                android:textStyle="bold"/>
 
             <TextView
                 android:layout_width="0dp"
@@ -76,7 +84,8 @@
                 android:text="MON"
                 android:textColor="@color/black"
                 android:textAlignment="center"
-                android:textSize="16sp"/>
+                android:textSize="16sp"
+                android:textStyle="bold"/>
 
             <TextView
                 android:layout_width="0dp"
@@ -85,7 +94,8 @@
                 android:text="TUE"
                 android:textColor="@color/black"
                 android:textAlignment="center"
-                android:textSize="16sp"/>
+                android:textSize="16sp"
+                android:textStyle="bold"/>
 
             <TextView
                 android:layout_width="0dp"
@@ -94,7 +104,8 @@
                 android:text="WED"
                 android:textColor="@color/black"
                 android:textAlignment="center"
-                android:textSize="16sp"/>
+                android:textSize="16sp"
+                android:textStyle="bold"/>
 
             <TextView
                 android:layout_width="0dp"
@@ -103,7 +114,8 @@
                 android:text="THUR"
                 android:textColor="@color/black"
                 android:textAlignment="center"
-                android:textSize="16sp"/>
+                android:textSize="16sp"
+                android:textStyle="bold"/>
 
             <TextView
                 android:layout_width="0dp"
@@ -112,7 +124,8 @@
                 android:text="FRI"
                 android:textColor="@color/black"
                 android:textAlignment="center"
-                android:textSize="16sp"/>
+                android:textSize="16sp"
+                android:textStyle="bold"/>
 
             <TextView
                 android:layout_width="0dp"
@@ -121,13 +134,17 @@
                 android:text="SAT"
                 android:textColor="@color/black"
                 android:textAlignment="center"
-                android:textSize="16sp"/>
+                android:textSize="16sp"
+                android:textStyle="bold"/>
         </LinearLayout>
 
+        <!-- Calendar Grid -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/calendarRecyclerView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent"
+            android:overScrollMode="never"
+            android:scrollbars="none"/>
     </LinearLayout>
 
     <!-- Clickable Background Overlay (Covers Everything When Pill List is Shown) -->
@@ -136,13 +153,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@android:color/transparent"
-        android:visibility="gone" />
+        android:visibility="gone"/>
 
     <!-- Pill List (Initially Hidden) -->
-
-    <include layout="@layout/pill_list" />
-
-
-
-
+    <include layout="@layout/pill_list"/>
 </FrameLayout>

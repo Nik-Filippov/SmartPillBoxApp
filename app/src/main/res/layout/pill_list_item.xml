@@ -6,47 +6,64 @@
     android:layout_height="wrap_content"
     android:padding="8dp">
 
+    <!-- Pill Name TextView with proportional margin and size adjustments -->
     <TextView
         android:id="@+id/pillNameTextView"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="19dp"
-        android:layout_marginBottom="24dp"
         android:text=""
         android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.1"
+        app:layout_constraintVertical_bias="0.05"
+        android:textColor="@color/darkGreenText"
+        android:textStyle="bold"/>
 
+    <!-- Pill Amount TextView with proportional margin and size adjustments -->
     <TextView
         android:id="@+id/pillAmountTextView"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="40dp"
         android:text=""
         android:textSize="18sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/pillNameTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_bias="0.5"
+        android:textColor="@color/darkGreenText"
+        android:textStyle="bold"/>
 
+    <!-- Pill Time TextView with proportional margin and size adjustments -->
     <TextView
         android:id="@+id/pillTimeTextView"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="300dp"
-        android:layout_marginTop="8dp"
         android:text=""
         android:textSize="18sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.9"
+        app:layout_constraintVertical_bias="0.05"
+        android:textColor="@color/darkGreenText"
+        android:textStyle="bold"
+        android:layout_marginStart="230dp"/>
 
+    <!-- Pill Recurrence TextView with proportional margin and size adjustments -->
     <TextView
         android:id="@+id/pillRecurrenceTextView"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="300dp"
-        android:layout_marginTop="40dp"
         android:text=""
         android:textSize="18sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/pillTimeTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_bias="0.1"
+        android:textColor="@color/darkGreenText"
+        android:textStyle="bold"
+        android:layout_marginStart="230dp"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

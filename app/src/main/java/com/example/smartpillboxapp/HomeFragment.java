@@ -29,7 +29,7 @@ public class HomeFragment extends Fragment {
 
     private TextView tvDateTime;
     private TextView tvData1, tvData2, tvData3;
-    private EditText etData1Subtitle, etData2Subtitle, etData3Subtitle;
+    private TextView etData1Subtitle, etData2Subtitle, etData3Subtitle;
     private Button btnEdit1, btnEdit2, btnEdit3;
     private SharedViewModel sharedViewModel;
     private int edited_container_number = 0;
@@ -213,13 +213,14 @@ public class HomeFragment extends Fragment {
     }
 
     private void updateDateTime() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMM dd yyyy HH:mm", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("hh:mm a 'on' EEEE, MMMM dd", Locale.getDefault());
         Handler handler = new Handler();
         handler.post(new Runnable() {
             @Override
             public void run() {
                 String currentDateTime = dateFormat.format(new Date());
-                requireActivity().runOnUiThread(() -> tvDateTime.setText(currentDateTime));
+                String formattedDateTime = "It's " + currentDateTime;
+                requireActivity().runOnUiThread(() -> tvDateTime.setText(formattedDateTime));
                 handler.postDelayed(this, 1000);
             }
         });
