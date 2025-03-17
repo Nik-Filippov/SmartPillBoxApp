@@ -1,3 +1,25 @@
 <resources>
     <string name="app_name">SmartPillBoxApp</string>
+    <string name="monthYearText">Jan 2025</string>
+    <string name="sunday">SUN</string>
+    <string name="monday">MON</string>
+    <string name="tuesday">TUE</string>
+    <string name="wednesday">WED</string>
+    <string name="thursday">THU</string>
+    <string name="friday">FRI</string>
+    <string name="saturday">SAT</string>
+    <string name="one">1</string>
+    <string name="previous_month">&lt;</string>
+    <string name="next_month">&gt;</string>
+    <string name="pill_name">Pill Name</string>
+    <string name="pill_count">Pill Count</string>
+    <string name="date">Add Date</string>
+    <string name="time">Add Time</string>
+    <string name="save_return">Save and Return</string>
+    <string name="recurrence">Add Recurrence</string>
+    <string name="container">Select Container</string>
+    <string name="reminderDot">•</string>
+    <string name="addPill">Add Pills</string>
+    <string name="deletePill">Delete Pill</string>
+    <string name="editPill">Edit Pill</string>
 </resources>
