@@ -1,56 +1,140 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-android:layout_width="match_parent"
-android:layout_height="match_parent"
-android:padding="16dp">
-
-<LinearLayout
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@color/lightGreenBackground">
 
-    <EditText
-        android:id="@+id/pillNameEdit"
-        android:layout_width="match_parent"
-        android:layout_height="65dp"
-        android:hint="@string/pill_name" />
-
-    <Spinner
-        android:id="@+id/pillCountSpinner"
-        android:layout_width="match_parent"
-        android:layout_height="65dp"
-         />
-
-    <Spinner
-        android:id="@+id/recurrenceSpinner"
-        android:layout_width="match_parent"
-        android:layout_height="65dp"
-        android:hint="@string/recurrence" />
-
-    <Spinner
-        android:id="@+id/containerSpinner"
-        android:layout_width="match_parent"
-        android:layout_height="65dp"
-        android:hint="@string/container" />
-
-    <Button
-        android:id="@+id/dateButton"
-        android:layout_width="match_parent"
-        android:layout_height="75dp"
-        android:background="@android:color/transparent"
-        android:text="@string/date" />
-
-    <Button
-        android:id="@+id/timeButton"
-        android:layout_width="match_parent"
-        android:layout_height="75dp"
-        android:background="@android:color/transparent"
-        android:text="@string/time" />
-
-    <Button
-        android:id="@+id/saveButton"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="300dp"
         android:layout_height="wrap_content"
-        android:text="@string/save_return" />
-</LinearLayout>
+        android:orientation="vertical">
+
+        <!-- Pill Name EditText -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/pill_name"
+            android:textSize="20sp"
+            android:textColor="@color/darkGreenText"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+        <EditText
+            android:id="@+id/pillNameEdit"
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+            android:hint="@string/pill_name"
+            android:background="@drawable/rounded_edittext"
+            android:padding="10dp"
+            android:textSize="18sp" />
+
+        <!-- Spacer between EditText and next section -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="16dp" />
+
+        <!-- Pill Count Spinner -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/pill_count"
+            android:textSize="20sp"
+            android:textColor="@color/darkGreenText"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/pillCountSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="65dp" />
+
+        <!-- Spacer between Spinner and next section -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="16dp" />
+
+        <!-- Recurrence Spinner -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/recurrence"
+            android:textSize="20sp"
+            android:textColor="@color/darkGreenText"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/recurrenceSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+            android:hint="@string/recurrence" />
+
+        <!-- Spacer between Spinner and next section -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="16dp" />
+
+        <!-- Container Spinner -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/container"
+            android:textSize="20sp"
+            android:textColor="@color/darkGreenText"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/containerSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+            android:hint="@string/container" />
+
+        <!-- Spacer between Spinner and next section -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="16dp" />
+
+        <!-- Date Button -->
+        <Button
+            android:id="@+id/dateButton"
+            android:layout_width="match_parent"
+            android:layout_height="75dp"
+            android:background="@drawable/rounded_button"
+            android:text="@string/date"
+            android:textColor="@color/white"
+            android:textSize="18sp" />
+
+        <!-- Spacer between buttons -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="16dp" />
+
+        <!-- Time Button -->
+        <Button
+            android:id="@+id/timeButton"
+            android:layout_width="match_parent"
+            android:layout_height="75dp"
+            android:background="@drawable/rounded_button"
+            android:text="@string/time"
+            android:textColor="@color/white"
+            android:textSize="18sp" />
+
+        <!-- Spacer between buttons -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="16dp" />
+
+        <!-- Save Button -->
+        <Button
+            android:id="@+id/saveButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/save_return"
+            android:background="@drawable/rounded_button"
+            android:textColor="@color/white"
+            android:textSize="18sp" />
+
+    </LinearLayout>
 </ScrollView>

@@ -1,6 +1,7 @@
 package com.example.smartpillboxapp;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -15,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -34,6 +36,7 @@ public class SettingsFragment extends Fragment {
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int REQUEST_BLUETOOTH_CONNECT = 2;
     private static final int REQUEST_BLUETOOTH_SCAN = 3;
+    TextView tvSelectedDevice;
 
     @Nullable
     @Override
@@ -42,6 +45,7 @@ public class SettingsFragment extends Fragment {
 
         Button btnScan = view.findViewById(R.id.btnScan);
         ListView lvDevices = view.findViewById(R.id.lvDevices);
+        tvSelectedDevice = view.findViewById(R.id.tvSelectedDevice);
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         devicesAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1);
@@ -118,11 +122,13 @@ public class SettingsFragment extends Fragment {
                 // This method is optional here
             }
 
+            @SuppressLint("MissingPermission")
             @Override
             public void onConnected(String message) {
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-                );
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                    tvSelectedDevice.setText("Connected to: " + device.getName());
+                });
             }
 
             @Override

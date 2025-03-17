@@ -3,14 +3,17 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@color/lightGreenBackground">
 
     <TextView
         android:id="@+id/tvDateTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Today: "
-        android:textSize="18sp"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@color/darkGreenText"
         android:layout_marginBottom="16dp"/>
 
     <!-- Data Box 1 -->
@@ -19,7 +22,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:background="@drawable/box_border"
+        android:background="@drawable/rounded_box"
         android:padding="16dp">
 
         <TextView
@@ -27,7 +30,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Container 1:"
-            android:textSize="16sp"
+            android:textSize="18sp"
+            android:textColor="@color/darkGreenText"
             android:textStyle="bold"
             android:layout_marginBottom="8dp"/>
 
@@ -36,7 +40,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Connect to Bluetooth"
-            android:textSize="24sp"
+            android:textSize="26sp"
+            android:textColor="@color/darkGreenText"
             android:textStyle="bold"
             android:layout_marginBottom="8dp"/>
 
@@ -46,24 +51,28 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp">
 
-            <EditText
+            <TextView
                 android:id="@+id/etData1Subtitle"
-                android:layout_width="0dp"
+                android:layout_width="237dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="Enter the pill name"
-                android:textSize="16sp"
-                android:layout_marginEnd="8dp"
                 android:enabled="false"
-                android:background="@android:color/transparent"/>
+                android:hint="Enter the pill name"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                android:padding="10dp"
+                android:layout_marginEnd="8dp"/>
 
             <Button
                 android:id="@+id/btnEdit1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Edit"/>
+                android:text="Edit"
+                android:background="@drawable/rounded_button"
+                android:textColor="@color/white"
+                android:textSize="18sp"/>
         </LinearLayout>
-
     </LinearLayout>
 
     <!-- Data Box 2 -->
@@ -72,7 +81,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:background="@drawable/box_border"
+        android:background="@drawable/rounded_box"
         android:padding="16dp">
 
         <TextView
@@ -80,7 +89,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Container 2:"
-            android:textSize="16sp"
+            android:textSize="18sp"
+            android:textColor="@color/darkGreenText"
             android:textStyle="bold"
             android:layout_marginBottom="8dp"/>
 
@@ -89,7 +99,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Connect to Bluetooth"
-            android:textSize="24sp"
+            android:textSize="26sp"
+            android:textColor="@color/darkGreenText"
             android:textStyle="bold"
             android:layout_marginBottom="8dp"/>
 
@@ -99,24 +110,28 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp">
 
-            <EditText
+            <TextView
                 android:id="@+id/etData2Subtitle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:hint="Enter the pill name"
-                android:textSize="16sp"
-                android:layout_marginEnd="8dp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                android:padding="10dp"
                 android:enabled="false"
-                android:background="@android:color/transparent"/>
+                android:layout_marginEnd="8dp"/>
 
             <Button
                 android:id="@+id/btnEdit2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Edit"/>
+                android:text="Edit"
+                android:background="@drawable/rounded_button"
+                android:textColor="@color/white"
+                android:textSize="18sp"/>
         </LinearLayout>
-
     </LinearLayout>
 
     <!-- Data Box 3 -->
@@ -125,7 +140,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:background="@drawable/box_border"
+        android:background="@drawable/rounded_box"
         android:padding="16dp">
 
         <TextView
@@ -133,7 +148,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Container 3:"
-            android:textSize="16sp"
+            android:textSize="18sp"
+            android:textColor="@color/darkGreenText"
             android:textStyle="bold"
             android:layout_marginBottom="8dp"/>
 
@@ -142,7 +158,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Connect to Bluetooth"
-            android:textSize="24sp"
+            android:textSize="26sp"
+            android:textColor="@color/darkGreenText"
             android:textStyle="bold"
             android:layout_marginBottom="8dp"/>
 
@@ -152,24 +169,28 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp">
 
-            <EditText
+            <TextView
                 android:id="@+id/etData3Subtitle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:hint="Enter the pill name"
-                android:textSize="16sp"
-                android:layout_marginEnd="8dp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                android:padding="10dp"
                 android:enabled="false"
-                android:background="@android:color/transparent"/>
+                android:layout_marginEnd="8dp"/>
 
             <Button
                 android:id="@+id/btnEdit3"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Edit"/>
+                android:text="Edit"
+                android:background="@drawable/rounded_button"
+                android:textColor="@color/white"
+                android:textSize="18sp"/>
         </LinearLayout>
-
     </LinearLayout>
 
 </LinearLayout>
