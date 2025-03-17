@@ -35,7 +35,7 @@
             android:id="@+id/tvData1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Value 1"
+            android:text="Connect to Bluetooth"
             android:textSize="24sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp"/>
@@ -88,7 +88,7 @@
             android:id="@+id/tvData2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Value 2"
+            android:text="Connect to Bluetooth"
             android:textSize="24sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp"/>
@@ -141,7 +141,7 @@
             android:id="@+id/tvData3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Value 3"
+            android:text="Connect to Bluetooth"
             android:textSize="24sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp"/>
