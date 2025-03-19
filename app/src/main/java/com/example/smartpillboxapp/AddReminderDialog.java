@@ -45,17 +45,36 @@ public class AddReminderDialog extends DialogFragment {
     private String selectedPillCount;
     private String selectedRecurrence;
     private String selectedContainer;
+    private String id;
+    private boolean isEdit;
     private DatabaseHelper dbHelper;
     private SQLiteDatabase sqLiteDatabase;
     private NotificationHelper notificationHelper;
 //    private CalendarFragment calendarFragment;
     private static final String ARG_SELECTED_DATE = "selectedDate"; // Argument key
+    private static final String ARG_SELECTED_NAME = "selectedPillName";
+    private static final String ARG_SELECTED_COUNT = "selectedPillCount";
+    private static final String ARG_SELECTED_RECURRENCE = "selectedRecurrence";
+    private static final String ARG_SELECTED_CONTAINER = "selectedContainer";
+    private static final String ARG_SELECTED_TIME = "selectedTime";
+    private static final String ARG_IS_EDIT = "idEdit";
+    private static final String ARG_ID = "id";
+    private PillListViewHolder pillListViewHolder;
 
-    public static AddReminderDialog newInstance(String date) {
+
+    public static AddReminderDialog newInstance(String date, String pillName, String pillCount, String recurrence, String container, String time, boolean isEdit, String id, PillListViewHolder pillListViewHolder) {
         AddReminderDialog fragment = new AddReminderDialog();
         Bundle args = new Bundle();
         args.putString(ARG_SELECTED_DATE, date);
+        args.putString(ARG_SELECTED_NAME, pillName);
+        args.putString(ARG_SELECTED_COUNT, pillCount);
+        args.putString(ARG_SELECTED_RECURRENCE, recurrence);
+        args.putString(ARG_SELECTED_CONTAINER, container);
+        args.putString(ARG_SELECTED_TIME, time);
+        args.putBoolean(ARG_IS_EDIT, isEdit);
+        args.putString(ARG_ID, id);
         fragment.setArguments(args);
+        fragment.pillListViewHolder = pillListViewHolder;
         return fragment;
     }
 
@@ -82,6 +101,13 @@ public class AddReminderDialog extends DialogFragment {
 
         if (getArguments() != null) {
             selectedDate = getArguments().getString(ARG_SELECTED_DATE);
+            selectedPillName = getArguments().getString(ARG_SELECTED_NAME);
+            selectedPillCount = getArguments().getString(ARG_SELECTED_COUNT);
+            selectedRecurrence = getArguments().getString(ARG_SELECTED_RECURRENCE);
+            selectedContainer = getArguments().getString(ARG_SELECTED_CONTAINER);
+            selectedTime = getArguments().getString(ARG_SELECTED_TIME);
+            isEdit = getArguments().getBoolean(ARG_IS_EDIT);
+            id = getArguments().getString(ARG_ID);
         }
 
         if (selectedDate != null) {
@@ -89,6 +115,28 @@ public class AddReminderDialog extends DialogFragment {
         } else {
             selectedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("MMMM d, yyyy"));
             dateButton.setText(selectedDate);
+        }
+
+        if (selectedPillName != null) {
+            pillNameEdit.setText(selectedPillName);
+        }
+
+        if (selectedTime != null) {
+            timeButton.setText(selectedTime);
+        }
+
+        if (selectedPillCount != null) {
+            setSpinnerValue(pillCountSpinner, selectedPillCount);
+        }
+
+
+        if (selectedRecurrence != null) {
+            setSpinnerValue(recurrenceSpinner, selectedRecurrence);
+        }
+
+
+        if (selectedContainer != null) {
+            setSpinnerValue(containerSpinner, selectedContainer);
         }
 
 
@@ -135,8 +183,15 @@ public class AddReminderDialog extends DialogFragment {
             Log.d("PillReminder", "Selected Date: " + selectedDate);
             Log.d("SelectedTime", "Selected Time: " + selectedTime);
 
-            insertDatabase(view);
-            readDatabase(view);
+
+            if (isEdit){
+                updateDatabase();
+            }
+            else {
+                insertDatabase();
+            }
+
+            readDatabase();
 
             dismiss();
         });
@@ -154,7 +209,7 @@ public class AddReminderDialog extends DialogFragment {
 
     }
 
-    public void insertDatabase(View view){
+    public void insertDatabase(){
         ContentValues contentValues = new ContentValues();
         LocalDate storedDate = LocalDate.parse(selectedDate, DateTimeFormatter.ofPattern("MMMM d, yyyy"));
         LocalDate endDate = storedDate.plusYears(2); // Two years from stored date
@@ -193,8 +248,66 @@ public class AddReminderDialog extends DialogFragment {
         }
     }
 
-    public void readDatabase(View view){
-        ArrayList<String> pillReminders = new ArrayList<>();
+    public void updateDatabase(){
+        String oldRecurrence = "";
+        if (id != null) {
+            String query = "SELECT recurrence FROM PillReminder WHERE id = ?";
+            Cursor cursor = sqLiteDatabase.rawQuery(query, new String[] {id});
+            if (cursor.getCount() != 0){
+                if (cursor.moveToNext()){
+                    oldRecurrence = cursor.getString(0);
+                }
+            }
+            sqLiteDatabase.delete("PillReminder", "id = ?", new String[]{id});
+        }
+
+        pillListViewHolder.deleteAll(selectedPillName, selectedTime, oldRecurrence);
+
+        ContentValues contentValues = new ContentValues();
+        LocalDate storedDate = LocalDate.parse(selectedDate, DateTimeFormatter.ofPattern("MMMM d, yyyy"));
+        LocalDate endDate = storedDate.plusYears(2);
+
+        while(!storedDate.isAfter(endDate)){
+            contentValues.put("pill_name", selectedPillName);
+            contentValues.put("pill_amount", Integer.parseInt(selectedPillCount));
+            contentValues.put("container", Integer.parseInt(selectedContainer));
+            contentValues.put("date", storedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")));
+            contentValues.put("time", selectedTime);
+            contentValues.put("recurrence", selectedRecurrence);
+
+            long result = sqLiteDatabase.insert("PillReminder", null, contentValues);
+            if (result == -1) {
+                Log.e("Database", "Insert failed");
+            } else {
+                Log.d("Database", "Insert successful");
+                // Notify parent fragment or activity
+                if (getParentFragment() instanceof ReminderInsertListener) {
+                    ((ReminderInsertListener) getParentFragment()).onReminderInserted();
+                }
+            }
+            setReminderAlarm(selectedPillName, storedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")), selectedTime, selectedPillCount);
+
+            if (pillListViewHolder != null) {
+                pillListViewHolder.checkForEmptyList();
+            }
+
+            if (selectedRecurrence.equals("Daily")){
+                storedDate = storedDate.plusDays(1);
+            }
+            else if (selectedRecurrence.equals("Weekly")){
+                storedDate = storedDate.plusWeeks(1);
+            }
+            else if (selectedRecurrence.equals("Monthly")) {
+                storedDate = storedDate.plusMonths(1);
+            }
+            else {
+                return;
+            }
+        }
+    }
+
+
+    public void readDatabase(){
         String query = "SELECT * FROM PillReminder";
         try {
             Cursor cursor = sqLiteDatabase.rawQuery(query, null);
@@ -279,6 +392,15 @@ public class AddReminderDialog extends DialogFragment {
         // Set the alarm for the exact time
         if (alarmManager != null) {
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+        }
+    }
+
+    private void setSpinnerValue(Spinner spinner, String value) {
+        for (int i = 0; i < spinner.getAdapter().getCount(); i++) {
+            if (spinner.getItemAtPosition(i).toString().equals(value)) {
+                spinner.setSelection(i);
+                break;
+            }
         }
     }
 }

@@ -104,7 +104,7 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
         addPillsButton.setOnClickListener(v -> {
             String datePicked = databaseDate;
             Log.d("CalendarFragment", "datePicked: " + datePicked);
-            AddReminderDialog addReminderFragment = new AddReminderDialog().newInstance(datePicked);
+            AddReminderDialog addReminderFragment = new AddReminderDialog().newInstance(datePicked, null, null, null, null, null, false, null, null);
             addReminderFragment.show(getChildFragmentManager(), "AddReminderDialog");
         });
 

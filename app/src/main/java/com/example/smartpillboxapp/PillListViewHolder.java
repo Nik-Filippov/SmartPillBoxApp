@@ -10,6 +10,7 @@ import android.widget.AdapterView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
@@ -23,9 +24,14 @@ public class PillListViewHolder extends RecyclerView.ViewHolder implements View.
     private final DatabaseHelper dbHelper;
     private final PillListAdapter adapter;  // Reference to your adapter
     private final CalendarAdapter calendarAdapter;
+    private final FragmentManager fragmentManager;
+    private String pillName;
+    private String pillCount;
+    private String pillTime;
+    private String pillRecurrence;
 
 
-    public PillListViewHolder(@NonNull View itemView, AdapterView.OnItemClickListener listener, Context context, String selectedDate, DatabaseHelper dbHelper, PillListAdapter adapter, CalendarAdapter calendarAdapter) {
+    public PillListViewHolder(@NonNull View itemView, AdapterView.OnItemClickListener listener, Context context, String selectedDate, DatabaseHelper dbHelper, PillListAdapter adapter, CalendarAdapter calendarAdapter, FragmentManager fragmentManager, String pillName, String pillCount, String pillTime, String pillRecurrence) {
         super(itemView);
         this.context = context; // Get context from itemView
         this.selectedDate = selectedDate;
@@ -38,19 +44,60 @@ public class PillListViewHolder extends RecyclerView.ViewHolder implements View.
         this.dbHelper = dbHelper;
         this.adapter = adapter;
         this.calendarAdapter = calendarAdapter;
+        this.fragmentManager = fragmentManager;
+        this.pillName = pillName;
+        this.pillCount = pillCount;
+        this.pillTime = pillTime;
+        this.pillRecurrence = pillRecurrence;
         itemView.setOnClickListener(this);
     }
 
     @Override
     public void onClick(View v) {
-        String pillName = pillNameTextView.getText().toString();
-        String pillTime = pillTimeTextView.getText().toString();
-        String pillRecurrence = pillRecurrenceTextView.getText().toString();
-        Log.d("Database", "pillRecurrence: " + pillRecurrence);
+        pillName = pillNameTextView.getText().toString();
+        pillTime = pillTimeTextView.getText().toString();
+        pillRecurrence = pillRecurrenceTextView.getText().toString();
+        String id;
+        String pillContainer;
+
+        // get id of pill
+        String getIdQuery = "SELECT id, pill_amount, container FROM PillReminder WHERE pill_name = ? AND date = ? AND time = ? AND recurrence = ?";
+        Cursor getIdCursor = sqLiteDatabase.rawQuery(getIdQuery, new String[]{pillName, selectedDate, pillTime, pillRecurrence});
+        if (getIdCursor.getCount() == 0) {
+            id = null;
+            pillContainer = null;
+            pillCount = null;
+            Log.d("PillListViewHolder", "No pill ids returned");
+        }
+        else if (getIdCursor.getCount() > 1) {
+            id = null;
+            pillContainer = null;
+            pillCount = null;
+            Log.d("PillListViewHolder", "More than one pill returned with same id");
+        }
+        else {
+            if (getIdCursor.moveToFirst()) {
+                id = getIdCursor.getInt(0) + "";
+                pillCount = getIdCursor.getInt(1) + "";
+                pillContainer = getIdCursor.getInt(2) + "";
+                Log.d("PillListViewHolder", "id: " + id + ", pillCount: " + pillCount + ", pillContainer: " + pillContainer);
+            } else {
+                id = null;
+                pillContainer = null;
+                pillCount = null;
+            }
+        }
+
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(" " + pillName + " ")
                 .setMessage(" " + selectedDate + " ")
                 .setPositiveButton("Edit", ((dialog, which) -> {
+                    AddReminderDialog addReminderDialog = new AddReminderDialog().newInstance(selectedDate, pillName, pillCount, pillRecurrence, pillContainer, pillTime, true, id, this);
+                    addReminderDialog.show(fragmentManager, "AddReminderDialog");
+                    if (adapter != null) {
+                        adapter.removeItem(getAdapterPosition()); // Pass the position to the adapter to remove it
+                    }
+                    checkForEmptyList();
                 }))
                 .setNegativeButton("Delete", ((dialog, which) -> {
 
@@ -67,11 +114,12 @@ public class PillListViewHolder extends RecyclerView.ViewHolder implements View.
                                 .setNegativeButton("Delete", (dialog2, which2) -> {
                                     deleteOnce(pillName, pillTime);
                                 })
-                                .setPositiveButton("Cancel", (dialog2, which2) -> {dialog2.dismiss();});
+                                .setPositiveButton("Cancel", (dialog2, which2) -> {
+                                    dialog2.dismiss();
+                                });
                         AlertDialog confirmDeleteDialog = confirmDelete.create();
                         confirmDeleteDialog.show();
-                    }
-                    else { // If pill to delete is recurring
+                    } else { // If pill to delete is recurring
                         // ONLY DO ThiS IF IT'S A RECURRING PILL
                         AlertDialog.Builder deleteBuilder = new AlertDialog.Builder(context);
                         deleteBuilder.setTitle("Delete Option")
@@ -82,7 +130,9 @@ public class PillListViewHolder extends RecyclerView.ViewHolder implements View.
                                             .setNegativeButton("Delete", ((dialog2, which2) -> {
                                                 deleteOnce(pillName, pillTime);
                                             }))
-                                            .setPositiveButton("Cancel", ((dialog2, which2) -> {dialog2.dismiss();}));
+                                            .setPositiveButton("Cancel", ((dialog2, which2) -> {
+                                                dialog2.dismiss();
+                                            }));
                                     AlertDialog confirmDeleteDialog = confirmDelete.create();
                                     confirmDeleteDialog.show();
                                 }))
@@ -92,7 +142,9 @@ public class PillListViewHolder extends RecyclerView.ViewHolder implements View.
                                             .setNegativeButton("Delete", ((dialog2, which2) -> {
                                                 deleteAll(pillName, pillTime, pillRecurrence);
                                             }))
-                                            .setPositiveButton("Cancel", ((dialog2, which2) -> {dialog2.dismiss();}));
+                                            .setPositiveButton("Cancel", ((dialog2, which2) -> {
+                                                dialog2.dismiss();
+                                            }));
                                     AlertDialog confirmDeleteDialog = confirmDelete.create();
                                     confirmDeleteDialog.show();
                                 }))
@@ -104,63 +156,74 @@ public class PillListViewHolder extends RecyclerView.ViewHolder implements View.
                 }))
                 .setNeutralButton("Cancel", ((dialog, which) -> {
                 }));
-
         AlertDialog dialog = builder.create();
         dialog.show();
     }
 
-    public void deleteAll(String pillName, String pillTime, String pillRecurrence){
-        long result = sqLiteDatabase.delete("PillReminder", "pill_name = ? AND time = ? AND recurrence = ?", new String[] {pillName, pillTime, pillRecurrence});
-        if (result == -1){
-            Log.e("Database", "Deletion failed");
+        public void deleteAll (String pillName, String pillTime, String pillRecurrence){
+            long result = sqLiteDatabase.delete("PillReminder", "pill_name = ? AND time = ? AND recurrence = ?", new String[]{pillName, pillTime, pillRecurrence});
+            if (result == -1) {
+                Log.e("Database", "Deletion failed");
+            } else {
+                Log.d("Database", "Deletion successful");
+                if (adapter != null) {
+                    Log.d("Database", "Notifying adapter to update list");
+                    adapter.removeItemsByPillDetails(pillName, pillTime, pillRecurrence); // You can pass the necessary details to remove from the adapter
+                }
+
+                checkForEmptyList();
+            }
         }
-        else {
-            Log.d("Database", "Deletion successful");
-            if (adapter != null) {
-                Log.d("Database", "Notifying adapter to update list");
-                adapter.removeItemsByPillDetails(pillName, pillTime, pillRecurrence); // You can pass the necessary details to remove from the adapter
+
+        public void deleteOnce (String pillName, String pillTime){
+            long result = sqLiteDatabase.delete("PillReminder", "pill_name = ? AND date = ? AND time = ?", new String[]{pillName, selectedDate, pillTime});
+            if (result == -1) {
+                Log.e("Database", "Deletion failed");
+            } else {
+                Log.d("Database", "Deletion successful: " + result);
+                // Notify the adapter to remove the item
+                if (adapter != null) {
+                    adapter.removeItem(getAdapterPosition()); // Pass the position to the adapter to remove it
+                }
+                checkForEmptyList();
+            }
+        }
+
+        public void checkForEmptyList () {
+            Log.d("PillListViewHolder", "In checkForEmptyList");
+
+            // Query to load all pills for the selected date
+            String query = "SELECT pill_name, pill_amount, time, recurrence FROM PillReminder WHERE date = ?";
+            SQLiteDatabase db = dbHelper.getReadableDatabase();
+            Cursor cursor = db.rawQuery(query, new String[]{selectedDate});
+
+            ArrayList<Pill> updatedPillList = new ArrayList<>();
+
+            if (cursor.getCount() == 0) {
+                // No pills found → show empty message
+                updatedPillList.add(new Pill("Pill List Empty", null, null, null));
+            } else {
+                // Load all pills into the list
+                while (cursor.moveToNext()) {
+                    String name = cursor.getString(0);
+                    String amount = cursor.getInt(1) + "";
+                    String time = cursor.getString(2);
+                    String recurrence = cursor.getString(3);
+                    updatedPillList.add(new Pill(name, amount, time, recurrence));
+                }
             }
 
-            checkForEmptyList();
-        }
-    }
+            // Update the adapter with the full list
+            adapter.updateList(updatedPillList);
+            adapter.notifyDataSetChanged();
 
-    public void deleteOnce(String pillName, String pillTime){
-        long result = sqLiteDatabase.delete("PillReminder", "pill_name = ? AND date = ? AND time = ?", new String[] {pillName, selectedDate, pillTime});
-        if (result == -1){
-            Log.e("Database", "Deletion failed");
-        }
-        else {
-            Log.d("Database", "Deletion successful: " + result);
-            // Notify the adapter to remove the item
-            if (adapter != null) {
-                Log.d("Database", "In adapter");
-                adapter.removeItem(getAdapterPosition()); // Pass the position to the adapter to remove it
-            }
-            checkForEmptyList();
-        }
-    }
-
-    public void checkForEmptyList(){
-        String query = "SELECT * FROM PillReminder WHERE date = '" + selectedDate + "'";
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery(query, null);
-
-        if (cursor.getCount() == 0){
-            // Show "Pill List Empty"
-            ArrayList<Pill> emptyList = new ArrayList<>();
-            emptyList.add(new Pill("Pill List Empty", null, null, null));
-            // Update the existing RecyclerView
-            adapter.updateList(emptyList);
-
-            // Notify CalendarAdapter to remove the reminder dot
+            // Update calendar dot
             if (calendarAdapter != null) {
-                Log.d("In calendar adapter", "YAYAYA");
                 calendarAdapter.updateReminderDots();
             }
+
+            cursor.close();
         }
-        cursor.close();
-    }
 
 
 

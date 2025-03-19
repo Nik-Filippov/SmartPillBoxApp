@@ -84,7 +84,6 @@ class CalendarAdapter extends RecyclerView.Adapter<CalendarViewHolder>
             hasReminder = true;
         }
         cursor.close();
-        db.close();
         return hasReminder;
     }
 
@@ -123,7 +122,6 @@ class CalendarAdapter extends RecyclerView.Adapter<CalendarViewHolder>
         }
 
         cursor.close();
-        db.close();
     }
 
 
