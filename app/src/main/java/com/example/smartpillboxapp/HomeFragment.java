@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -157,7 +158,8 @@ public class HomeFragment extends Fragment {
                     }
                     dataPartsStr[i] = String.format("%.2f", weight);
                     dataPartsDouble[i] = weight;
-                    if(!Double.isNaN(onePillWeights[i])){
+                    if(!(Double.isNaN(onePillWeights[i]) || onePillWeights[i] == 0)){
+                        Log.e("Main",weight + "," + onePillWeights[i]);
                         numPills[i] = Math.toIntExact(round(weight / onePillWeights[i]));
                     } else {
                         numPills[i] = MIN_VALUE;
