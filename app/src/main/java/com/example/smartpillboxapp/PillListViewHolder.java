@@ -8,12 +8,17 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.TextView;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Intent;
+
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class PillListViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
     public TextView pillNameTextView, pillAmountTextView, pillTimeTextView, pillRecurrenceTextView;
@@ -161,14 +166,35 @@ public class PillListViewHolder extends RecyclerView.ViewHolder implements View.
     }
 
         public void deleteAll (String pillName, String pillTime, String pillRecurrence){
-            long result = sqLiteDatabase.delete("PillReminder", "pill_name = ? AND time = ? AND recurrence = ?", new String[]{pillName, pillTime, pillRecurrence});
+            // Query database for all associated dates before deletion
+            Cursor cursor = sqLiteDatabase.query("PillReminder", new String[]{"date"},
+                    "pill_name = ? AND time = ? AND recurrence = ?",
+                    new String[]{pillName, pillTime, pillRecurrence},
+                    null, null, null);
+
+            ArrayList<String> datesToDelete = new ArrayList<>();
+            while (cursor.moveToNext()) {
+                datesToDelete.add(cursor.getString(cursor.getColumnIndexOrThrow("date"))); // Collect all dates
+            }
+            cursor.close(); // Close cursor after retrieving data
+
+            // Now delete the records
+            long result = sqLiteDatabase.delete("PillReminder", "pill_name = ? AND time = ? AND recurrence = ?",
+                    new String[]{pillName, pillTime, pillRecurrence});
+
             if (result == -1) {
                 Log.e("Database", "Deletion failed");
             } else {
                 Log.d("Database", "Deletion successful");
+
+                // Cancel alarms for all associated dates
+                for (String date : datesToDelete) {
+                    cancelReminderAlarm(pillName, date, pillTime);
+                }
+
                 if (adapter != null) {
                     Log.d("Database", "Notifying adapter to update list");
-                    adapter.removeItemsByPillDetails(pillName, pillTime, pillRecurrence); // You can pass the necessary details to remove from the adapter
+                    adapter.removeItemsByPillDetails(pillName, pillTime, pillRecurrence);
                 }
 
                 checkForEmptyList();
@@ -182,6 +208,7 @@ public class PillListViewHolder extends RecyclerView.ViewHolder implements View.
             } else {
                 Log.d("Database", "Deletion successful: " + result);
                 // Notify the adapter to remove the item
+                cancelReminderAlarm(pillName, selectedDate, pillTime);
                 if (adapter != null) {
                     adapter.removeItem(getAdapterPosition()); // Pass the position to the adapter to remove it
                 }
@@ -225,6 +252,31 @@ public class PillListViewHolder extends RecyclerView.ViewHolder implements View.
             cursor.close();
         }
 
+        public void cancelReminderAlarm(String pillName, String date, String time) {
+            Context context = itemView.getContext();
+            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+            Intent intent = new Intent(context, PillReminderReceiver.class);
+            intent.putExtra("pill_name", pillName);
+            intent.putExtra("date", date);
+            intent.putExtra("time", time);
+
+            int requestCode = (pillName + date + time).hashCode();
+
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                    context, requestCode, intent, PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            if (pendingIntent != null && alarmManager != null) {
+                alarmManager.cancel(pendingIntent);
+                pendingIntent.cancel();
+                Log.d("AlarmCancel", "Successfully canceled alarm.");
+            } else {
+                Log.d("AlarmCancel", "No alarm found to cancel.");
+            }
+
+
+        }
 
 
 }

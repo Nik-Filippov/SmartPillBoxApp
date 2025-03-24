@@ -57,7 +57,7 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
         try{
             dbHelper = new DatabaseHelper(this.getContext(), "PillReminderDatabase", null, 1);
             sqLiteDatabase = dbHelper.getWritableDatabase();
-            sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS PillReminder(id INTEGER PRIMARY KEY AUTOINCREMENT, pill_name TEXT, pill_amount INT, container INT, date TEXT, time TEXT, recurrence TEXT)");
+            sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS PillReminder(id INTEGER PRIMARY KEY AUTOINCREMENT, pill_name TEXT, pill_amount INT, container INT, date TEXT, time TEXT, recurrence TEXT, two_week_threshold INT)");
         }
         catch(Exception e){
             e.printStackTrace();

@@ -27,7 +27,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Locale;
 
 public class AddReminderDialog extends DialogFragment {
@@ -151,7 +150,6 @@ public class AddReminderDialog extends DialogFragment {
                 dateButton.setText(date);
                 selectedDate = date;
             });
-            Log.d(null, "test");
             dateFragment.show(getChildFragmentManager(), "DatePickerFragment");
         });
 
@@ -209,6 +207,20 @@ public class AddReminderDialog extends DialogFragment {
 
     }
 
+    private int calculateTwoWeekThreshold(String recurrence, String pillCount){
+        int pillAmount = Integer.parseInt(pillCount);
+        if (recurrence.equals("Daily")){
+            return 14 * pillAmount;
+        }
+        else if (recurrence.equals("Weekly")){
+            return 2 * pillAmount;
+        }
+        else if (recurrence.equals("Monthly")){
+            return pillAmount;
+        }
+        return 0;
+    }
+
     public void insertDatabase(){
         ContentValues contentValues = new ContentValues();
         LocalDate storedDate = LocalDate.parse(selectedDate, DateTimeFormatter.ofPattern("MMMM d, yyyy"));
@@ -221,6 +233,7 @@ public class AddReminderDialog extends DialogFragment {
             contentValues.put("date", storedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")));
             contentValues.put("time", selectedTime);
             contentValues.put("recurrence", selectedRecurrence);
+            contentValues.put("two_week_threshold", calculateTwoWeekThreshold(selectedRecurrence, selectedPillCount));
             long result = sqLiteDatabase.insert("PillReminder", null, contentValues);
             if (result == -1) {
                 Log.e("Database", "Insert failed");
@@ -233,6 +246,7 @@ public class AddReminderDialog extends DialogFragment {
             }
             // Schedule the alarm for the reminder
             setReminderAlarm(selectedPillName, storedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")), selectedTime, selectedPillCount);
+
             if (selectedRecurrence.equals("Daily")){
                 storedDate = storedDate.plusDays(1);
             }
@@ -250,25 +264,27 @@ public class AddReminderDialog extends DialogFragment {
 
     public void updateDatabase(){
         String oldRecurrence = "";
+        String oldPillName = selectedPillName;  // Store the new name as default
         if (id != null) {
-            String query = "SELECT recurrence FROM PillReminder WHERE id = ?";
+            String query = "SELECT pill_name, recurrence FROM PillReminder WHERE id = ?";
             Cursor cursor = sqLiteDatabase.rawQuery(query, new String[] {id});
-            if (cursor.getCount() != 0){
-                if (cursor.moveToNext()){
-                    oldRecurrence = cursor.getString(0);
-                }
+            if (cursor.moveToNext()) {  // Move directly since cursor should have only one row
+                oldPillName = cursor.getString(0);  // Get the old name
+                oldRecurrence = cursor.getString(1);  // Get the old recurrence
             }
-            sqLiteDatabase.delete("PillReminder", "id = ?", new String[]{id});
+            cursor.close(); // Always close the cursor
+
+            // Delete ALL old reminders related to the old name, time, and recurrence
+            pillListViewHolder.deleteAll(oldPillName, selectedTime, oldRecurrence);
         }
 
-        pillListViewHolder.deleteAll(selectedPillName, selectedTime, oldRecurrence);
-
+        // Insert the new reminder
         ContentValues contentValues = new ContentValues();
         LocalDate storedDate = LocalDate.parse(selectedDate, DateTimeFormatter.ofPattern("MMMM d, yyyy"));
         LocalDate endDate = storedDate.plusYears(2);
 
-        while(!storedDate.isAfter(endDate)){
-            contentValues.put("pill_name", selectedPillName);
+        while (!storedDate.isAfter(endDate)) {
+            contentValues.put("pill_name", selectedPillName); // NEW name
             contentValues.put("pill_amount", Integer.parseInt(selectedPillCount));
             contentValues.put("container", Integer.parseInt(selectedContainer));
             contentValues.put("date", storedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")));
@@ -285,23 +301,22 @@ public class AddReminderDialog extends DialogFragment {
                     ((ReminderInsertListener) getParentFragment()).onReminderInserted();
                 }
             }
+
             setReminderAlarm(selectedPillName, storedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")), selectedTime, selectedPillCount);
 
             if (pillListViewHolder != null) {
                 pillListViewHolder.checkForEmptyList();
             }
 
-            if (selectedRecurrence.equals("Daily")){
+            // Handle recurrence
+            if (selectedRecurrence.equals("Daily")) {
                 storedDate = storedDate.plusDays(1);
-            }
-            else if (selectedRecurrence.equals("Weekly")){
+            } else if (selectedRecurrence.equals("Weekly")) {
                 storedDate = storedDate.plusWeeks(1);
-            }
-            else if (selectedRecurrence.equals("Monthly")) {
+            } else if (selectedRecurrence.equals("Monthly")) {
                 storedDate = storedDate.plusMonths(1);
-            }
-            else {
-                return;
+            } else {
+                return;  // Stop if recurrence is "Does Not Repeat"
             }
         }
     }
@@ -387,7 +402,10 @@ public class AddReminderDialog extends DialogFragment {
             return;
         }
 
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(requireContext(), (int) System.currentTimeMillis(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        // Generate a unique request code for this reminder
+        int requestCode = (pillName + date + time).hashCode();
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(requireContext(), requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         // Set the alarm for the exact time
         if (alarmManager != null) {
