@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SmartPillBoxApp</string>
+    <string name="app_name">My Pill Box</string>
     <string name="monthYearText">Jan 2025</string>
     <string name="sunday">SUN</string>
     <string name="monday">MON</string>
