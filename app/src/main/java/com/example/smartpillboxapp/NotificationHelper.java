@@ -11,6 +11,7 @@ import androidx.core.app.NotificationManagerCompat;
 
 public class NotificationHelper {
     private static final String CHANNEL_ID = "pill_reminder_channel";
+    private static final String REFILL_CHANNEL_ID = "pill_refill_channel";
 
     public static void createNotificationChannel(Context context){
         CharSequence name = "Pill Reminder";
@@ -37,6 +38,32 @@ public class NotificationHelper {
 
         NotificationManagerCompat manager = NotificationManagerCompat.from(context);
         manager.notify((int) System.currentTimeMillis(), builder.build());
+    }
 
+    public static void createPillRefillChannel(Context context){
+        CharSequence name = "Pill Refill";
+        String description = "Notification for pill refills";
+        int importance = NotificationManager.IMPORTANCE_HIGH;
+        NotificationChannel channel = new NotificationChannel(REFILL_CHANNEL_ID, name, importance);
+        channel.setDescription(description);
+
+        NotificationManager manager = context.getSystemService(NotificationManager.class);
+        manager.createNotificationChannel(channel);
+    }
+
+    public static void sendRefillNotification(Context context, int container){
+        Intent intent = new Intent(context, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, REFILL_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_launcher_foreground) // Change to own icon at some point
+                .setContentTitle("Pill Supply Low!")
+                .setContentText("Container " + container + " is running low on pills. Please refill soon!")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent);
+
+        NotificationManagerCompat manager = NotificationManagerCompat.from(context);
+        manager.notify((int) System.currentTimeMillis(), builder.build());
     }
 }

@@ -4,11 +4,16 @@ import static java.lang.Double.NaN;
 import static java.lang.Integer.MIN_VALUE;
 import static java.lang.Math.round;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +24,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -45,7 +52,14 @@ public class HomeFragment extends Fragment {
     private static final String KEY_ONE_PILL_1 = "one_pill_weight_1";
     private static final String KEY_ONE_PILL_2 = "one_pill_weight_2";
     private static final String KEY_ONE_PILL_3 = "one_pill_weight_3";
-
+    private int previousPillCount1;
+    private int previousPillCount2;
+    private int previousPillCount3;
+    private SQLiteDatabase sqLiteDatabase;
+    private DatabaseHelper dbHelper;
+    private Integer[] numPills;
+    private Integer[] testNumPills;
+    private NotificationHelper notificationHelper;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -77,6 +91,7 @@ public class HomeFragment extends Fragment {
         onePillWeightContainer3 = parseDoubleOrDefault(sharedPreferences.getString(KEY_ONE_PILL_3, ""), NaN);
 
         updateDateTime();
+        notificationHelper.createPillRefillChannel(this.getContext());
 
         // "Edit" buttons' click listeners
         btnEdit1.setOnClickListener(v -> {
@@ -88,6 +103,15 @@ public class HomeFragment extends Fragment {
             args.putString("one_pill_weight", String.valueOf(onePillWeightContainer1));
             dialogFragment.setArguments(args);
             dialogFragment.show(getChildFragmentManager(), "EditContainerDialog");
+
+            // TESTING
+//            testNumPills[0] = testNumPills[0] - 1;
+//            try {
+//                updateDataFields(testNumPills);
+//            } catch (InterruptedException e) {
+//                throw new RuntimeException(e);
+//            }
+//            Log.d("HomeFragment", "testNumPills[0]: " + testNumPills[0]);
         });
 
         btnEdit2.setOnClickListener(v -> {
@@ -137,6 +161,20 @@ public class HomeFragment extends Fragment {
         // Send weight data to dialog
         sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
 
+        // TEST NUM PILLS
+//        testNumPills = new Integer[3];
+//        testNumPills[0] = 20; // Container 1
+//        testNumPills[1] = 12; // Container 2
+//        testNumPills[2] = 8; // Container 3
+//
+//        try {
+//            updateDataFields(testNumPills);
+//        } catch (InterruptedException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        sharedViewModel.setNumPills(testNumPills);
+
         // Listen for Bluetooth data updates
         BluetoothManager bluetoothManager = BluetoothManager.getInstance(getContext());
         bluetoothManager.setDataListener(new BluetoothManager.DataListener() {
@@ -144,7 +182,7 @@ public class HomeFragment extends Fragment {
             public void onDataReceived(String data) {
                 String[] dataPartsStr = data.split(";");
                 Double[] dataPartsDouble = new Double[dataPartsStr.length];
-                Integer[] numPills = new Integer[dataPartsStr.length];
+                numPills = new Integer[dataPartsStr.length];
                 Double[] onePillWeights = {onePillWeightContainer1, onePillWeightContainer2, onePillWeightContainer3};
                 for(int i = 0; i < dataPartsStr.length; i++){
                     double weight = Double.parseDouble(dataPartsStr[i]);
@@ -169,7 +207,14 @@ public class HomeFragment extends Fragment {
                 mainHandler.post(() -> {
                     // The line below displays weight instead of pill counts
                     // updateDataFields(dataPartsDouble);
-                    updateDataFields(numPills);
+
+                    try {
+                        updateDataFields(numPills);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    sharedViewModel.setNumPills(numPills);
                     if(edited_container_number != 0) {
                         sharedViewModel.updateData(dataPartsStr[edited_container_number - 1]);
                     }
@@ -194,24 +239,44 @@ public class HomeFragment extends Fragment {
     }
 
     // Helper methods
-    private void updateDataFields(@NonNull Integer[] dataParts) {
-        if (dataParts.length == 3) {
-            if(dataParts[0] != MIN_VALUE){
-                tvData1.setText(Integer.toString(dataParts[0]));
-            } else {
-                tvData1.setText("Set one pill weight");
+    private void updateDataFields(@NonNull Integer[] dataParts) throws InterruptedException {
+        Log.d("HomeFragment", "in update fields");
+
+
+        // Delay the check by 5 seconds using a Handler
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (dataParts.length == 3) {
+                if (dataParts[0] != MIN_VALUE) {
+                    if (dataParts[0] < previousPillCount1) {
+                        checkPillSupply(1);
+                    }
+                    tvData1.setText(Integer.toString(dataParts[0]));
+                    previousPillCount1 = dataParts[0];
+                } else {
+                    tvData1.setText("Set one pill weight");
+                }
+
+                if (dataParts[1] != MIN_VALUE) {
+                    if (dataParts[1] < previousPillCount2) {
+                        checkPillSupply(2);
+                    }
+                    tvData2.setText(Integer.toString(dataParts[1]));
+                    previousPillCount2 = dataParts[1];
+                } else {
+                    tvData2.setText("Set one pill weight");
+                }
+
+                if (dataParts[2] != MIN_VALUE) {
+                    if (dataParts[2] < previousPillCount3) {
+                        checkPillSupply(3);
+                    }
+                    tvData3.setText(Integer.toString(dataParts[2]));
+                    previousPillCount3 = dataParts[2];
+                } else {
+                    tvData3.setText("Set one pill weight");
+                }
             }
-            if(dataParts[1] != MIN_VALUE){
-                tvData2.setText(Integer.toString(dataParts[1]));
-            } else {
-                tvData2.setText("Set one pill weight");
-            }
-            if(dataParts[2] != MIN_VALUE){
-                tvData3.setText(Integer.toString(dataParts[2]));
-            } else {
-                tvData3.setText("Set one pill weight");
-            }
-        }
+        }, 5000); // 5-second delay
     }
 
     private void updateDateTime() {
@@ -236,6 +301,35 @@ public class HomeFragment extends Fragment {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
             return defaultValue;
+        }
+    }
+
+    private void checkPillSupply(int containerNumber){
+        int twoWeekThreshold = -1;
+        dbHelper = new DatabaseHelper(this.getContext(), "PillReminderDatabase", null, 1);
+        sqLiteDatabase = dbHelper.getReadableDatabase();
+        String query = "SELECT two_week_threshold FROM PillReminder WHERE container = ?";
+        Cursor cursor = sqLiteDatabase.rawQuery(query, new String[]{containerNumber + ""});
+
+        if (cursor.moveToNext()){
+            twoWeekThreshold = cursor.getInt(0);
+        }
+
+        // CHANGE TEST VALUES
+        if (containerNumber == 1){
+            if (numPills[0] < twoWeekThreshold){ // For testing use testNumPills
+                notificationHelper.sendRefillNotification(this.getContext(), containerNumber);
+            }
+        }
+        else if (containerNumber == 2){
+            if (numPills[1] < twoWeekThreshold){ // For testing use testNumPills
+                notificationHelper.sendRefillNotification(this.getContext(), containerNumber);
+            }
+        }
+        else if (containerNumber == 3){
+            if (numPills[2] < twoWeekThreshold){ // For testing use testNumPills
+                notificationHelper.sendRefillNotification(this.getContext(), containerNumber);
+            }
         }
     }
 }

@@ -22,6 +22,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -59,6 +61,8 @@ public class AddReminderDialog extends DialogFragment {
     private static final String ARG_IS_EDIT = "idEdit";
     private static final String ARG_ID = "id";
     private PillListViewHolder pillListViewHolder;
+    private SharedViewModel sharedViewModel;
+    private int[] numPills;
 
 
     public static AddReminderDialog newInstance(String date, String pillName, String pillCount, String recurrence, String container, String time, boolean isEdit, String id, PillListViewHolder pillListViewHolder) {
