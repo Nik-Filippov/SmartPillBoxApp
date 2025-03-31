@@ -237,6 +237,23 @@ public class AddReminderDialog extends DialogFragment {
     }
 
     public void insertDatabase(){
+
+        // Check if container has not been registered to a pill yet
+
+        String query = "SELECT container FROM PillReminder";
+        Cursor cursor = sqLiteDatabase.rawQuery(query, null);
+
+        if (cursor != null){
+            while (cursor.moveToNext()){
+                int dbContainer = cursor.getInt(0);
+                if (dbContainer == Integer.parseInt(selectedContainer)){
+                    Log.d("AddReminderDialog", "IN IF");
+                    Toast.makeText(requireContext(), "Container " + selectedContainer + " already registered to a pill.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+        }
+
         ContentValues contentValues = new ContentValues();
         LocalDate storedDate = LocalDate.parse(selectedDate, DateTimeFormatter.ofPattern("MMMM d, yyyy"));
         LocalDate endDate = storedDate.plusYears(2); // Two years from stored date

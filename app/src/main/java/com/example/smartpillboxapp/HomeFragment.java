@@ -106,15 +106,15 @@ public class HomeFragment extends Fragment {
             dialogFragment.setArguments(args);
             dialogFragment.show(getChildFragmentManager(), "EditContainerDialog");
 
-            // TESTING
-//            testNumPills[0] = testNumPills[0] - 1;
-//            try {
-//                updateDataFields(testNumPills);
-//            } catch (InterruptedException e) {
-//                throw new RuntimeException(e);
-//            }
-//            Log.d("HomeFragment", "testNumPills[0]: " + testNumPills[0]);
-            // END TESTING
+//             TESTING
+            testNumPills[0] = testNumPills[0] - 1;
+            try {
+                updateDataFields(testNumPills);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            Log.d("HomeFragment", "testNumPills[0]: " + testNumPills[0]);
+//             END TESTING
         });
 
         btnEdit2.setOnClickListener(v -> {
@@ -165,25 +165,25 @@ public class HomeFragment extends Fragment {
         sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
 
         // TEST NUM PILLS
-//        testNumPills = new Integer[3];
-//        testNumPills[0] = 20; // Container 1
-//        testNumPills[1] = 12; // Container 2
-//        testNumPills[2] = 8; // Container 3
-//
-//        SharedPreferences.Editor editor = sharedPreferences.edit();
-//        editor.putInt("pill_count_1", testNumPills[0]);
-//        editor.putInt("pill_count_2", testNumPills[1]);
-//        editor.putInt("pill_count_3", testNumPills[2]);
-//        editor.apply();  // Apply the changes to SharedPreferences
+        testNumPills = new Integer[3];
+        testNumPills[0] = 20; // Container 1
+        testNumPills[1] = 12; // Container 2
+        testNumPills[2] = 8; // Container 3
 
-//
-//        try {
-//            updateDataFields(testNumPills);
-//        } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
-//        }
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt("pill_count_1", testNumPills[0]);
+        editor.putInt("pill_count_2", testNumPills[1]);
+        editor.putInt("pill_count_3", testNumPills[2]);
+        editor.apply();  // Apply the changes to SharedPreferences
 
-//        sharedViewModel.setNumPills(testNumPills);
+
+        try {
+            updateDataFields(testNumPills);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        sharedViewModel.setNumPills(testNumPills);
 
         // END TESTING
 

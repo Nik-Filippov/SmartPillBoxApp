@@ -22,5 +22,5 @@
     <string name="addPill">New Reminder</string>
     <string name="deletePill">Delete Pill</string>
     <string name="editPill">Edit Pill</string>
-    <string name="enableNotifications">Enable Notifications</string>
+    <string name="enableNotifications">Low Supply Threshold</string>
 </resources>
