@@ -4,9 +4,12 @@ import static java.lang.Double.NaN;
 import static java.lang.Integer.MIN_VALUE;
 import static java.lang.Math.round;
 
+import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -30,6 +33,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
@@ -52,9 +56,6 @@ public class HomeFragment extends Fragment {
     private static final String KEY_ONE_PILL_1 = "one_pill_weight_1";
     private static final String KEY_ONE_PILL_2 = "one_pill_weight_2";
     private static final String KEY_ONE_PILL_3 = "one_pill_weight_3";
-    private int previousPillCount1;
-    private int previousPillCount2;
-    private int previousPillCount3;
     private SQLiteDatabase sqLiteDatabase;
     private DatabaseHelper dbHelper;
     private Integer[] numPills;
@@ -91,6 +92,7 @@ public class HomeFragment extends Fragment {
         onePillWeightContainer3 = parseDoubleOrDefault(sharedPreferences.getString(KEY_ONE_PILL_3, ""), NaN);
 
         updateDateTime();
+        scheduleDailyCheck();
         notificationHelper.createPillRefillChannel(this.getContext());
 
         // "Edit" buttons' click listeners
@@ -105,12 +107,12 @@ public class HomeFragment extends Fragment {
             dialogFragment.show(getChildFragmentManager(), "EditContainerDialog");
 
             // TESTING
-//            testNumPills[0] = testNumPills[0] - 1;
-//            try {
-//                updateDataFields(testNumPills);
-//            } catch (InterruptedException e) {
-//                throw new RuntimeException(e);
-//            }
+            testNumPills[0] = testNumPills[0] - 1;
+            try {
+                updateDataFields(testNumPills);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
 //            Log.d("HomeFragment", "testNumPills[0]: " + testNumPills[0]);
         });
 
@@ -162,18 +164,25 @@ public class HomeFragment extends Fragment {
         sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
 
         // TEST NUM PILLS
-//        testNumPills = new Integer[3];
-//        testNumPills[0] = 20; // Container 1
-//        testNumPills[1] = 12; // Container 2
-//        testNumPills[2] = 8; // Container 3
-//
-//        try {
-//            updateDataFields(testNumPills);
-//        } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//        sharedViewModel.setNumPills(testNumPills);
+        testNumPills = new Integer[3];
+        testNumPills[0] = 20; // Container 1
+        testNumPills[1] = 12; // Container 2
+        testNumPills[2] = 8; // Container 3
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt("pill_count_1", testNumPills[0]);
+        editor.putInt("pill_count_2", testNumPills[1]);
+        editor.putInt("pill_count_3", testNumPills[2]);
+        editor.apply();  // Apply the changes to SharedPreferences
+
+
+        try {
+            updateDataFields(testNumPills);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        sharedViewModel.setNumPills(testNumPills);
 
         // Listen for Bluetooth data updates
         BluetoothManager bluetoothManager = BluetoothManager.getInstance(getContext());
@@ -242,41 +251,30 @@ public class HomeFragment extends Fragment {
     private void updateDataFields(@NonNull Integer[] dataParts) throws InterruptedException {
         Log.d("HomeFragment", "in update fields");
 
+        SharedPreferences.Editor editor = sharedPreferences.edit();
 
         // Delay the check by 5 seconds using a Handler
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (dataParts.length == 3) {
-                if (dataParts[0] != MIN_VALUE) {
-                    if (dataParts[0] < previousPillCount1) {
-                        checkPillSupply(1);
-                    }
-                    tvData1.setText(Integer.toString(dataParts[0]));
-                    previousPillCount1 = dataParts[0];
-                } else {
-                    tvData1.setText("Set one pill weight");
-                }
-
-                if (dataParts[1] != MIN_VALUE) {
-                    if (dataParts[1] < previousPillCount2) {
-                        checkPillSupply(2);
-                    }
-                    tvData2.setText(Integer.toString(dataParts[1]));
-                    previousPillCount2 = dataParts[1];
-                } else {
-                    tvData2.setText("Set one pill weight");
-                }
-
-                if (dataParts[2] != MIN_VALUE) {
-                    if (dataParts[2] < previousPillCount3) {
-                        checkPillSupply(3);
-                    }
-                    tvData3.setText(Integer.toString(dataParts[2]));
-                    previousPillCount3 = dataParts[2];
-                } else {
-                    tvData3.setText("Set one pill weight");
-                }
+        if (dataParts.length == 3) {
+            if (dataParts[0] != MIN_VALUE) {
+                tvData1.setText(Integer.toString(dataParts[0]));
+                editor.putInt("pill_count_1", dataParts[0]);
+            } else {
+                tvData1.setText("Set one pill weight");
             }
-        }, 5000); // 5-second delay
+            if (dataParts[1] != MIN_VALUE) {
+                tvData2.setText(Integer.toString(dataParts[1]));
+                editor.putInt("pill_count_2", dataParts[1]);
+            } else {
+                tvData2.setText("Set one pill weight");
+            }
+            if (dataParts[2] != MIN_VALUE) {
+                tvData3.setText(Integer.toString(dataParts[2]));
+                editor.putInt("pill_count_3", dataParts[2]);
+            } else {
+                tvData3.setText("Set one pill weight");
+            }
+        }
+        editor.apply();
     }
 
     private void updateDateTime() {
@@ -304,32 +302,29 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    private void checkPillSupply(int containerNumber){
-        int twoWeekThreshold = -1;
-        dbHelper = new DatabaseHelper(this.getContext(), "PillReminderDatabase", null, 1);
-        sqLiteDatabase = dbHelper.getReadableDatabase();
-        String query = "SELECT two_week_threshold FROM PillReminder WHERE container = ?";
-        Cursor cursor = sqLiteDatabase.rawQuery(query, new String[]{containerNumber + ""});
+    private void scheduleDailyCheck() {
+        Context context = requireContext();
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(context, PillSupplyCheckReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        if (cursor.moveToNext()){
-            twoWeekThreshold = cursor.getInt(0);
+        // Set the alarm to trigger at 8:00 AM every day
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 8);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
+            // If 8 AM has already passed today, schedule for tomorrow
+            calendar.add(Calendar.DAY_OF_YEAR, 1);
         }
 
-        // CHANGE TEST VALUES
-        if (containerNumber == 1){
-            if (numPills[0] < twoWeekThreshold){ // For testing use testNumPills
-                notificationHelper.sendRefillNotification(this.getContext(), containerNumber);
-            }
+        // Set repeating alarm with exact and allow while idle
+        if (alarmManager != null) {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
+                    calendar.getTimeInMillis(),
+                    pendingIntent);
         }
-        else if (containerNumber == 2){
-            if (numPills[1] < twoWeekThreshold){ // For testing use testNumPills
-                notificationHelper.sendRefillNotification(this.getContext(), containerNumber);
-            }
-        }
-        else if (containerNumber == 3){
-            if (numPills[2] < twoWeekThreshold){ // For testing use testNumPills
-                notificationHelper.sendRefillNotification(this.getContext(), containerNumber);
-            }
-        }
+
+        Log.d("HomeFragment", "Daily pill supply check scheduled for 8 AM.");
     }
 }

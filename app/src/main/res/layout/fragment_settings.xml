@@ -88,11 +88,24 @@
             android:textStyle="bold"
             android:padding="10dp"/>
 
-        <Switch
-            android:id="@+id/switch_notifications"
+        <RadioGroup
+            android:id="@+id/radioGroupNotifications"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:checked="true"/>
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/rbOneWeek"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1 week"/>
+
+            <RadioButton
+                android:id="@+id/rbTwoWeeks"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2 weeks"/>
+        </RadioGroup>
     </LinearLayout>
 
 </LinearLayout>

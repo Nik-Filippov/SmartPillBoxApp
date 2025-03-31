@@ -5,17 +5,24 @@ import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,11 +44,38 @@ public class SettingsFragment extends Fragment {
     private static final int REQUEST_BLUETOOTH_CONNECT = 2;
     private static final int REQUEST_BLUETOOTH_SCAN = 3;
     TextView tvSelectedDevice;
+    private RadioGroup radioGroupNotifications;
+    private RadioButton rbOneWeek;
+    private RadioButton rbTwoWeeks;
+    private DatabaseHelper dbHelper;
+    private SharedPreferences prefs;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
+
+        radioGroupNotifications = view.findViewById(R.id.radioGroupNotifications);
+        rbOneWeek = view.findViewById(R.id.rbOneWeek);
+        rbTwoWeeks = view.findViewById(R.id.rbTwoWeeks);
+
+        prefs = requireContext().getSharedPreferences("PillSettings", Context.MODE_PRIVATE);
+        int notifyDays = prefs.getInt("notify_days", 14);
+
+        if (notifyDays == 7){
+            rbOneWeek.setChecked(true);
+        }
+        else {
+            rbTwoWeeks.setChecked(true);
+        }
+
+        radioGroupNotifications.setOnCheckedChangeListener((group, checkedId) -> {
+            int selectedDays = (checkedId == R.id.rbOneWeek) ? 7 : 14;
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putInt("notify_days", selectedDays);
+            editor.apply();
+            updateThreshold();
+        });
 
         Button btnScan = view.findViewById(R.id.btnScan);
         ListView lvDevices = view.findViewById(R.id.lvDevices);
@@ -145,4 +179,39 @@ public class SettingsFragment extends Fragment {
         super.onDestroyView();
         requireContext().unregisterReceiver(receiver);
     }
+
+    private void updateThreshold(){
+        dbHelper = new DatabaseHelper(this.getContext(), "PillReminderDatabase", null, 1);
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+         int notifyDays = prefs.getInt("notify_days", 14);
+         Cursor cursor = db.rawQuery("SELECT id, pill_amount, recurrence FROM PillReminder", null);
+        int threshold = -1;
+         if (cursor != null){
+            while (cursor.moveToNext()){
+                int id = cursor.getInt(0);
+                int pillCount = cursor.getInt(1);
+                String pillRecurrence = cursor.getString(2);
+                if (pillRecurrence.equals("Daily")){
+                    threshold = notifyDays * pillCount;
+                }
+                else if (pillRecurrence.equals("Weekly")){
+                    threshold = (notifyDays / 7) * pillCount;
+                }
+                else if (pillRecurrence.equals("Monthly")){
+                    threshold = pillCount;
+                }
+                Log.d("SettingsFragment", "pillRecurrence: " + pillRecurrence);
+                Log.d("SettingsFragment", "notifyDays: " + notifyDays);
+                Log.d("SettingsFragment", "threshold: " + threshold);
+                // Update thresholds
+                ContentValues contentValues = new ContentValues();
+
+                contentValues.put("reminderThreshold", threshold);
+                db.update("PillReminder", contentValues, "id = ?", new String[]{String.valueOf(id)});
+            }
+            cursor.close();
+        }
+        dbHelper.close();
+    }
+
 }

@@ -57,7 +57,7 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
         try{
             dbHelper = new DatabaseHelper(this.getContext(), "PillReminderDatabase", null, 1);
             sqLiteDatabase = dbHelper.getWritableDatabase();
-            sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS PillReminder(id INTEGER PRIMARY KEY AUTOINCREMENT, pill_name TEXT, pill_amount INT, container INT, date TEXT, time TEXT, recurrence TEXT, two_week_threshold INT)");
+            sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS PillReminder(id INTEGER PRIMARY KEY AUTOINCREMENT, pill_name TEXT, pill_amount INT, container INT, date TEXT, time TEXT, recurrence TEXT, reminderThreshold INT)");
         }
         catch(Exception e){
             e.printStackTrace();
@@ -148,11 +148,9 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
     private ArrayList<String> getReminderDatesForCalendar(LocalDate date){
         ArrayList<String> reminderDates = new ArrayList<>();
         SQLiteDatabase db = new DatabaseHelper(getContext(), "PillReminderDatabase", null, 1).getReadableDatabase();
-//        YearMonth yearMonth = YearMonth.from(date);
 
         String monthString = date.format(DateTimeFormatter.ofPattern("yyyy-MM")); // Example: "2024-02"
         String query = "SELECT DISTINCT date FROM PillReminder WHERE date LIKE '" + monthString + "%'";
-//        Log.d("CalendarFragment", "Month string: " + monthString);
 
         Cursor cursor = db.rawQuery(query, null);
         while (cursor.moveToNext()){
@@ -193,19 +191,10 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
     @Override
     public void onItemClick(int position, String dayText) {
         if (!dayText.equals("")){
-//            String message = "Selected Date " + dayText + " " + monthYearFromDate(selectedDate);
-//            Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
-//            AddReminderDialog addReminderFragment = new AddReminderDialog();
-//            Bundle args = new Bundle();
-//            addReminderFragment.show(getChildFragmentManager(), "AddReminderDialog");
 
             LocalDate clickedDate = selectedDate.withDayOfMonth(Integer.parseInt(dayText));
 
             databaseDate = monthDayYearString(clickedDate);
-//            String databaseDate = selectedDate.withDayOfMonth(Integer.parseInt(dayText))
-//                    .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-
-//            Log.d("CalendarFragment", "databaseDate: " + databaseDate);
 
             showPillList(databaseDate);
 
@@ -225,12 +214,10 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
         }
         else {
             while (cursor.moveToNext()) {
-//                pillNames.add(cursor.getString(0));
                 String pill_name = cursor.getString(0);
                 int pill_amount = cursor.getInt(1);
                 String pill_time = cursor.getString(2);
                 String pill_recurrence = cursor.getString(3);
-                Log.d("CalendarFragment", "recurrence: " + pill_recurrence);
                 pillItems.add(new Pill(pill_name, "Amount: " + pill_amount, pill_time, pill_recurrence));
             }
         }
@@ -252,10 +239,6 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
         PillListAdapter adapter = new PillListAdapter(pillItems, (AdapterView.OnItemClickListener) this, this.getContext(), date, dbHelper, calendarAdapter);
         pillListRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         pillListRecyclerView.setAdapter(adapter);
-        Log.d("CalendarFragment", "Time: " + pillTimeTextView.getText().toString());
-        Log.d("CalendarFragment", "Recurrence: " + pillRecurrenceTextView.getText().toString());
-
-
     }
 
     public void refreshCalendar() {

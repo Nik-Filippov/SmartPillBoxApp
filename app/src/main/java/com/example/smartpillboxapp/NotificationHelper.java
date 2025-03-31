@@ -1,5 +1,6 @@
 package com.example.smartpillboxapp;
 
+import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -51,14 +52,22 @@ public class NotificationHelper {
         manager.createNotificationChannel(channel);
     }
 
-    public static void sendRefillNotification(Context context, int container){
+    public static void sendRefillNotification(Context context, int[] containerNumbers){
         Intent intent = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        StringBuilder contentText = new StringBuilder("Please refill the following containers:\n");
+
+        for (int i = 0; i < containerNumbers.length; i++){
+            if (containerNumbers[i] != -1){
+                contentText.append("Container " + (i + 1) + "\n");
+            }
+        }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, REFILL_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_foreground) // Change to own icon at some point
                 .setContentTitle("Pill Supply Low!")
-                .setContentText("Container " + container + " is running low on pills. Please refill soon!")
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText.toString()))  // Use BigTextStyle here
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent);
@@ -66,4 +75,5 @@ public class NotificationHelper {
         NotificationManagerCompat manager = NotificationManagerCompat.from(context);
         manager.notify((int) System.currentTimeMillis(), builder.build());
     }
+
 }

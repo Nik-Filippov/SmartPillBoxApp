@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.icu.text.SimpleDateFormat;
@@ -86,6 +87,12 @@ public class AddReminderDialog extends DialogFragment {
 
         View view = inflater.inflate(R.layout.add_reminder_dialog, container, false);
 
+//        sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
+//
+//        sharedViewModel.getNumPills().observe(this, pills -> {
+//            numPills = pills;
+//        });
+
         pillNameEdit = view.findViewById(R.id.pillNameEdit);
 
         pillCountSpinner = view.findViewById(R.id.pillCountSpinner);
@@ -144,7 +151,6 @@ public class AddReminderDialog extends DialogFragment {
 
 
         if (selectedDate != null) {
-            Log.d("AddReminderDialog", "selectedDate: " + selectedDate);
             dateButton.setText(selectedDate);
         }
 
@@ -178,12 +184,12 @@ public class AddReminderDialog extends DialogFragment {
                 Toast.makeText(requireContext(), "Please enter in all fields.", Toast.LENGTH_SHORT).show();
                 return;
             }
-            Log.d("PillReminder", "Pill Name: " + selectedPillName);
-            Log.d("PillReminder", "Pill Count: " + selectedPillCount);
-            Log.d("PillReminder", "Recurrence: " + selectedRecurrence);
-            Log.d("PillReminder", "Container: " + selectedContainer);
-            Log.d("PillReminder", "Selected Date: " + selectedDate);
-            Log.d("SelectedTime", "Selected Time: " + selectedTime);
+//            Log.d("PillReminder", "Pill Name: " + selectedPillName);
+//            Log.d("PillReminder", "Pill Count: " + selectedPillCount);
+//            Log.d("PillReminder", "Recurrence: " + selectedRecurrence);
+//            Log.d("PillReminder", "Container: " + selectedContainer);
+//            Log.d("PillReminder", "Selected Date: " + selectedDate);
+//            Log.d("SelectedTime", "Selected Time: " + selectedTime);
 
 
             if (isEdit){
@@ -193,7 +199,7 @@ public class AddReminderDialog extends DialogFragment {
                 insertDatabase();
             }
 
-            readDatabase();
+//            readDatabase();
 
             dismiss();
         });
@@ -212,12 +218,17 @@ public class AddReminderDialog extends DialogFragment {
     }
 
     private int calculateTwoWeekThreshold(String recurrence, String pillCount){
+        SharedPreferences prefs = requireContext().getSharedPreferences("PillSettings", Context.MODE_PRIVATE);
+        int notifyDays = prefs.getInt("notify_days", 14);
+
+        Log.d("AddReminderDialog", "Notify Days = " + notifyDays);
+
         int pillAmount = Integer.parseInt(pillCount);
         if (recurrence.equals("Daily")){
-            return 14 * pillAmount;
+            return notifyDays * pillAmount;
         }
         else if (recurrence.equals("Weekly")){
-            return 2 * pillAmount;
+            return (notifyDays / 7) * pillAmount;
         }
         else if (recurrence.equals("Monthly")){
             return pillAmount;
@@ -237,7 +248,7 @@ public class AddReminderDialog extends DialogFragment {
             contentValues.put("date", storedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")));
             contentValues.put("time", selectedTime);
             contentValues.put("recurrence", selectedRecurrence);
-            contentValues.put("two_week_threshold", calculateTwoWeekThreshold(selectedRecurrence, selectedPillCount));
+            contentValues.put("reminderThreshold", calculateTwoWeekThreshold(selectedRecurrence, selectedPillCount));
             long result = sqLiteDatabase.insert("PillReminder", null, contentValues);
             if (result == -1) {
                 Log.e("Database", "Insert failed");
