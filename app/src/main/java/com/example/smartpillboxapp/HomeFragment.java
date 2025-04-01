@@ -159,7 +159,7 @@ public class HomeFragment extends Fragment {
                     dataPartsStr[i] = String.format("%.2f", weight);
                     dataPartsDouble[i] = weight;
                     if(!(Double.isNaN(onePillWeights[i]) || onePillWeights[i] == 0)){
-                        Log.e("Main",weight + "," + onePillWeights[i]);
+                        //Log.e("Main",weight + "," + onePillWeights[i]);
                         numPills[i] = Math.toIntExact(round(weight / onePillWeights[i]));
                     } else {
                         numPills[i] = MIN_VALUE;
