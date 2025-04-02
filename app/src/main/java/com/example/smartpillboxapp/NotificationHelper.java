@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -32,7 +33,7 @@ public class NotificationHelper {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_foreground) // Change to own icon at some point
                 .setContentTitle("It's time to take your medication!")
-                .setContentText(pillName + "(" + pillAmount + ")")
+                .setContentText(pillName + " (" + pillAmount + ")")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent);
@@ -40,6 +41,7 @@ public class NotificationHelper {
         NotificationManagerCompat manager = NotificationManagerCompat.from(context);
         manager.notify((int) System.currentTimeMillis(), builder.build());
     }
+
 
     public static void createPillRefillChannel(Context context){
         CharSequence name = "Pill Refill";
@@ -75,5 +77,6 @@ public class NotificationHelper {
         NotificationManagerCompat manager = NotificationManagerCompat.from(context);
         manager.notify((int) System.currentTimeMillis(), builder.build());
     }
+
 
 }

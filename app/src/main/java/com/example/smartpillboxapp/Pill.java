@@ -30,4 +30,7 @@ public class Pill{
         return pillRecurrence;
     }
 
+    public String getName() {
+        return pillName;
+    }
 }

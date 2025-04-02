@@ -13,10 +13,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 
 public class PillListAdapter extends RecyclerView.Adapter<PillListViewHolder> {
-    private final ArrayList<Pill> pillList;
-    private final Context context;
-    private final AdapterView.OnItemClickListener listener;
-    private final String selectedDate;
+    private ArrayList<Pill> pillList;
+    private Context context;
+    private AdapterView.OnItemClickListener listener;
+    private String selectedDate;
     private String pillName;
     private String pillCount;
     private String pillTime;

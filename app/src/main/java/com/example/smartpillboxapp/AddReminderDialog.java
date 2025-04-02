@@ -27,6 +27,7 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -86,12 +87,6 @@ public class AddReminderDialog extends DialogFragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState){
 
         View view = inflater.inflate(R.layout.add_reminder_dialog, container, false);
-
-//        sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
-//
-//        sharedViewModel.getNumPills().observe(this, pills -> {
-//            numPills = pills;
-//        });
 
         pillNameEdit = view.findViewById(R.id.pillNameEdit);
 
@@ -256,7 +251,7 @@ public class AddReminderDialog extends DialogFragment {
 
         ContentValues contentValues = new ContentValues();
         LocalDate storedDate = LocalDate.parse(selectedDate, DateTimeFormatter.ofPattern("MMMM d, yyyy"));
-        LocalDate endDate = storedDate.plusYears(2); // Two years from stored date
+        LocalDate endDate = storedDate.plusYears(1); // Two years from stored date
 
         while(!storedDate.isAfter(endDate)) {
             contentValues.put("pill_name", selectedPillName);
@@ -277,7 +272,8 @@ public class AddReminderDialog extends DialogFragment {
                 }
             }
             // Schedule the alarm for the reminder
-            setReminderAlarm(selectedPillName, storedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")), selectedTime, selectedPillCount);
+            setReminderAlarm(selectedPillName, storedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")), selectedTime, selectedPillCount, selectedContainer);
+
 
             if (selectedRecurrence.equals("Daily")){
                 storedDate = storedDate.plusDays(1);
@@ -323,6 +319,7 @@ public class AddReminderDialog extends DialogFragment {
             contentValues.put("time", selectedTime);
             contentValues.put("recurrence", selectedRecurrence);
 
+
             long result = sqLiteDatabase.insert("PillReminder", null, contentValues);
             if (result == -1) {
                 Log.e("Database", "Insert failed");
@@ -334,7 +331,8 @@ public class AddReminderDialog extends DialogFragment {
                 }
             }
 
-            setReminderAlarm(selectedPillName, storedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")), selectedTime, selectedPillCount);
+            setReminderAlarm(selectedPillName, storedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")), selectedTime, selectedPillCount, selectedContainer);
+
 
             if (pillListViewHolder != null) {
                 pillListViewHolder.checkForEmptyList();
@@ -417,12 +415,14 @@ public class AddReminderDialog extends DialogFragment {
         void onReminderInserted();
     }
 
-    public void setReminderAlarm(String pillName, String date, String time, String pillAmount) {
+    public void setReminderAlarm(String pillName, String date, String time, String pillAmount, String container) {
         AlarmManager alarmManager = (AlarmManager) requireContext().getSystemService(Context.ALARM_SERVICE);
 
         Intent intent = new Intent(requireContext(), PillReminderReceiver.class);
+
         intent.putExtra("pill_name", pillName);
         intent.putExtra("pill_amount", pillAmount);
+        intent.putExtra("container", container);
 
         // Convert date & time strings into Calendar object
         Calendar calendar = Calendar.getInstance();
@@ -444,6 +444,7 @@ public class AddReminderDialog extends DialogFragment {
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
         }
     }
+
 
     private void setSpinnerValue(Spinner spinner, String value) {
         for (int i = 0; i < spinner.getAdapter().getCount(); i++) {

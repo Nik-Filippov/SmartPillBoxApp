@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel;
 public class SharedViewModel extends ViewModel {
     private final MutableLiveData<String> data = new MutableLiveData<>();
     private final MutableLiveData<int[]> numPillsLiveData = new MutableLiveData<>();
+    private MutableLiveData<Boolean> updateCalendar = new MutableLiveData<>();
+
 
     public LiveData<String> getData() {
         return data;
@@ -29,6 +31,18 @@ public class SharedViewModel extends ViewModel {
         }
 
         numPillsLiveData.setValue(primitiveNumPills);
+    }
+
+    public LiveData<Boolean> getUpdateCalendar() {
+        return updateCalendar;
+    }
+
+    public void triggerCalendarUpdate() {
+        updateCalendar.setValue(true); // Trigger the update
+    }
+
+    public void resetCalendarUpdate() {
+        updateCalendar.setValue(false); // Reset the trigger
     }
 }
 

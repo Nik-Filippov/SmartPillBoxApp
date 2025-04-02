@@ -1,11 +1,14 @@
 package com.example.smartpillboxapp;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -22,6 +25,8 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 public class CalendarFragment extends Fragment implements CalendarAdapter.OnItemListener, AddReminderDialog.ReminderInsertListener, AdapterView.OnItemClickListener{
     private TextView monthYearText, pillNameTextView, pillAmountTextView, pillTimeTextView, pillRecurrenceTextView;
@@ -33,6 +38,7 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
     private SQLiteDatabase sqLiteDatabase;
     private CalendarAdapter calendarAdapter;
     private String databaseDate;
+    private SharedViewModel sharedViewModel;
 
 
 
@@ -48,6 +54,17 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
+
+        // Observe the update trigger from HomeFragment
+        sharedViewModel.getUpdateCalendar().observe(getViewLifecycleOwner(), update -> {
+            if (update != null && update) {
+                // Call method to refresh/update the calendar
+                calendarAdapter.updateReminderDots();  // Your method to refresh the calendar
+                sharedViewModel.resetCalendarUpdate(); // Reset the update trigger
+            }
+        });
+
         return inflater.inflate(R.layout.fragment_calendar, container, false);
     }
 
@@ -103,7 +120,6 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
 
         addPillsButton.setOnClickListener(v -> {
             String datePicked = databaseDate;
-            Log.d("CalendarFragment", "datePicked: " + datePicked);
             AddReminderDialog addReminderFragment = new AddReminderDialog().newInstance(datePicked, null, null, null, null, null, false, null, null);
             addReminderFragment.show(getChildFragmentManager(), "AddReminderDialog");
         });
@@ -140,6 +156,9 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
         }
 
         calendarAdapter = new CalendarAdapter(daysInMonth, reminderDates, this, dbHelper, currentMonth, currentYear);
+
+        SharedPrefHelper.saveCalendarData(this.getContext(), daysInMonth, reminderDates, currentMonth, currentYear);
+
         RecyclerView.LayoutManager layoutManager = new GridLayoutManager(requireActivity().getApplicationContext(), 7);
         calendarRecyclerView.setLayoutManager(layoutManager);
         calendarRecyclerView.setAdapter(calendarAdapter);
@@ -205,11 +224,9 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
         ArrayList<Pill> pillItems = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         String query = "SELECT pill_name, pill_amount, time, recurrence FROM PillReminder WHERE date = '" + date + "'";
-        Log.d("CalendarFragment", "Query: " + query);
         Cursor cursor = db.rawQuery(query, null);
 
         if (cursor.getCount() == 0){
-            Log.d("CalendarFragment", "Pill Names is empty");
             pillItems.add(new Pill("Pill List Empty", null, null, null));
         }
         else {
@@ -239,6 +256,9 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
         PillListAdapter adapter = new PillListAdapter(pillItems, (AdapterView.OnItemClickListener) this, this.getContext(), date, dbHelper, calendarAdapter);
         pillListRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         pillListRecyclerView.setAdapter(adapter);
+
+        SharedPrefHelper.savePillItems(getContext(), pillItems);
+
     }
 
     public void refreshCalendar() {
@@ -247,4 +267,5 @@ public class CalendarFragment extends Fragment implements CalendarAdapter.OnItem
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {}
+
 }
