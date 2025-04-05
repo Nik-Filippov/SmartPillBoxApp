@@ -9,11 +9,13 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
 
     private FrameLayout viewPagerContainer;
     private FrameLayout fragmentContainer;
     private ViewPager2 viewPager;
+    private CalendarAdapter calendarAdapter;
+    private PillListAdapter pillListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,4 +67,5 @@ public class MainActivity extends AppCompatActivity {
         // Show the ViewPager container again
         viewPagerContainer.setVisibility(View.VISIBLE);  // Make sure the ViewPager container is visible
     }
+
 }

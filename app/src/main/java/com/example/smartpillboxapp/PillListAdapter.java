@@ -7,15 +7,20 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 
 public class PillListAdapter extends RecyclerView.Adapter<PillListViewHolder> {
-    private final ArrayList<Pill> pillList;
-    private final Context context;
-    private final AdapterView.OnItemClickListener listener;
-    private final String selectedDate;
+    private ArrayList<Pill> pillList;
+    private Context context;
+    private AdapterView.OnItemClickListener listener;
+    private String selectedDate;
+    private String pillName;
+    private String pillCount;
+    private String pillTime;
+    private String pillRecurrence;
     private DatabaseHelper dbHelper;
     private CalendarAdapter calendarAdapter;
 
@@ -32,12 +37,17 @@ public class PillListAdapter extends RecyclerView.Adapter<PillListViewHolder> {
     @Override
     public PillListViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.pill_list_item, parent, false);
-        return new PillListViewHolder(view, listener, context, selectedDate, dbHelper, this, calendarAdapter);
+        return new PillListViewHolder(view, listener, context, selectedDate, dbHelper, this, calendarAdapter, ((FragmentActivity) parent.getContext()).getSupportFragmentManager(), pillName, pillCount, pillTime, pillRecurrence);
     }
 
     @Override
     public void onBindViewHolder(@NonNull PillListViewHolder holder, int position) {
         Pill pill = pillList.get(position);
+
+        pillName = pill.getPillName();
+        pillCount = pill.getPillAmount();
+        pillTime = pill.getPillTime();
+        pillRecurrence = pill.getPillRecurrence();
 //        holder.pillListTextView.setText(pillName);
         holder.pillNameTextView.setText(pill.getPillName());
         holder.pillAmountTextView.setText(pill.getPillAmount());

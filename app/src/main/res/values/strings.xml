@@ -19,7 +19,8 @@
     <string name="recurrence">Add Recurrence</string>
     <string name="container">Select Container</string>
     <string name="reminderDot">•</string>
-    <string name="addPill">New Remainder</string>
+    <string name="addPill">New Reminder</string>
     <string name="deletePill">Delete Pill</string>
     <string name="editPill">Edit Pill</string>
+    <string name="enableNotifications">Low Supply Threshold</string>
 </resources>

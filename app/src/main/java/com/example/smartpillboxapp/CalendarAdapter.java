@@ -17,11 +17,11 @@ import java.util.ArrayList;
 
 class CalendarAdapter extends RecyclerView.Adapter<CalendarViewHolder>
 {
-    private final ArrayList<String> daysOfMonth;
-    private final ArrayList<String> reminderDates;
+    private ArrayList<String> daysOfMonth;
+    private ArrayList<String> reminderDates;
 
-    private final OnItemListener onItemListener;
-    private final DatabaseHelper dbHelper;
+    private OnItemListener onItemListener;
+    private DatabaseHelper dbHelper;
     private int month;
     private int year;
 
@@ -75,16 +75,11 @@ class CalendarAdapter extends RecyclerView.Adapter<CalendarViewHolder>
     private boolean hasRemindersForDate(String date) {
 //        Log.d("CalendarAdapter", "Passes Date: " + date);
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        String query = "SELECT * FROM PillReminder WHERE date = '" + date + "'";
-//        Log.d("CalendarAdapter", "QUERY: " + query);
-        Cursor cursor = db.rawQuery(query, null);
+        String query = "SELECT * FROM PillReminder WHERE date = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{date});
 
-        boolean hasReminder = false;
-        if (cursor.getCount() != 0) {
-            hasReminder = true;
-        }
+        boolean hasReminder = cursor.getCount() > 0;
         cursor.close();
-        db.close();
         return hasReminder;
     }
 
@@ -108,8 +103,18 @@ class CalendarAdapter extends RecyclerView.Adapter<CalendarViewHolder>
     }
 
     public void updateReminderDots() {
-        refreshReminderDates();  // Refresh the list of reminder dates
-        notifyDataSetChanged();
+        refreshReminderDates();  // Ensure the reminder dates are refreshed after deletion
+
+        // Refresh only affected ViewHolders (to minimize unnecessary updates)
+        for (int i = 0; i < daysOfMonth.size(); i++) {
+            String day = daysOfMonth.get(i);
+            if (!day.isEmpty()) {
+                String formattedDate = getFormattedDate(year, month, Integer.parseInt(day));
+                if (!reminderDates.contains(formattedDate)) {
+                    notifyItemChanged(i);  // Only refresh cells where dots should be removed
+                }
+            }
+        }
     }
 
     // Fetch latest reminder dates from database
@@ -121,9 +126,7 @@ class CalendarAdapter extends RecyclerView.Adapter<CalendarViewHolder>
         while (cursor.moveToNext()) {
             reminderDates.add(cursor.getString(0));  // Add updated dates
         }
-
         cursor.close();
-        db.close();
     }
 
 

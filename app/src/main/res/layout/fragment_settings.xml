@@ -69,4 +69,43 @@
                 android:textSize="18sp"/>
         </LinearLayout>
     </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/rounded_box"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/enableNotifications"
+            android:textSize="18sp"
+            android:textColor="@color/darkGreenText"
+            android:textStyle="bold"
+            android:padding="10dp"/>
+
+        <RadioGroup
+            android:id="@+id/radioGroupNotifications"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/rbOneWeek"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1 week"/>
+
+            <RadioButton
+                android:id="@+id/rbTwoWeeks"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2 weeks"/>
+        </RadioGroup>
+    </LinearLayout>
+
 </LinearLayout>
