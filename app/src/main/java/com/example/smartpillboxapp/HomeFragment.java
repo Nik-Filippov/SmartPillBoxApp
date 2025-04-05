@@ -390,21 +390,32 @@ public class HomeFragment extends Fragment{
 
     }
 
-    private void checkTimeAndDeleteOrNotify(String date, String time, String pillName){
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
-        LocalTime reminderTime = LocalTime.parse(time, formatter);
-        LocalTime currentTime = LocalTime.now();
+    private void checkTimeAndDeleteOrNotify(String date, String time, String pillName) {
+        if (time == null || time.trim().isEmpty()) {
+            Log.e("HomeFragment", "Reminder time is null or empty. Skipping deletion.");
+            return;
+        }
 
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
+            LocalTime reminderTime = LocalTime.parse(time, formatter);
+            LocalTime currentTime = LocalTime.now();
 
-        // Within reminder time -> not after +10 minutes and not before reminder time
-        if (currentTime.isAfter(reminderTime)) {
-            long result = sqLiteDatabase.delete("PillReminder", "pill_name = ? AND date = ? AND time = ?", new String[]{pillName, date, time});
-            if (result == -1) {
-                Log.e("Database", "Deletion failed");
+            // Check if current time is after reminder time
+            if (currentTime.isAfter(reminderTime)) {
+                long result = sqLiteDatabase.delete("PillReminder", "pill_name = ? AND date = ? AND time = ?", new String[]{pillName, date, time});
+                if (result == -1) {
+                    Log.e("Database", "Deletion failed for reminder: " + pillName + " at " + time + " on " + date);
+                } else {
+                    Log.d("Database", "Successfully deleted reminder: " + pillName + " at " + time + " on " + date);
+                    sharedViewModel.triggerCalendarUpdate();
+                }
             } else {
-                Log.d("Database", "Deletion successful: " + result);
-                sharedViewModel.triggerCalendarUpdate();
+                Log.d("ReminderCheck", "Reminder time not passed yet. Current time: " + currentTime + ", Reminder: " + reminderTime);
             }
+
+        } catch (Exception e) {
+            Log.e("HomeFragment", "Failed to parse reminder time: " + time, e);
         }
     }
 
