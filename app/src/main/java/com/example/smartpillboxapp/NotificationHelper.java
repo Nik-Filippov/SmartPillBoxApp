@@ -77,6 +77,4 @@ public class NotificationHelper {
         NotificationManagerCompat manager = NotificationManagerCompat.from(context);
         manager.notify((int) System.currentTimeMillis(), builder.build());
     }
-
-
 }

@@ -379,7 +379,7 @@ public class HomeFragment extends Fragment{
         Cursor cursor = sqLiteDatabase.rawQuery(query, new String[]{currentDate, container});
         String time = null;
         String pillName = null;
-        if (cursor != null) {
+        if (cursor != null && cursor.getCount() > 0) {
             while (cursor.moveToNext()){
                 time = cursor.getString(0);
                 pillName = cursor.getString(1);
@@ -387,11 +387,11 @@ public class HomeFragment extends Fragment{
             checkTimeAndDeleteOrNotify(currentDate, time, pillName);
             cursor.close();
         }
-
     }
 
     private void checkTimeAndDeleteOrNotify(String date, String time, String pillName){
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
+
         LocalTime reminderTime = LocalTime.parse(time, formatter);
         LocalTime currentTime = LocalTime.now();
 
