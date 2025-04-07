@@ -220,16 +220,16 @@ public class HomeFragment extends Fragment{
                     double weight = Double.parseDouble(dataPartsStr[i]);
                     // Normalize weight to get accurate grams
                     if(i == 0){
-                        weight *= 20/38.90;
+                        weight *= 20/37.59;
                     } else if (i == 1){
-                        weight *= 20/38.70;
+                        weight *= 20/38.78;
                     } else if (i == 2){
-                        weight *= 20/37.05 - 0.45;
+                        weight *= 20/37.99;
                     }
                     dataPartsStr[i] = String.format("%.2f", weight);
                     dataPartsDouble[i] = weight;
                     if(!(Double.isNaN(onePillWeights[i]) || onePillWeights[i] == 0)){
-                        Log.e("Main",weight + "," + onePillWeights[i]);
+                        //Log.e("Main",weight + "," + onePillWeights[i]);
                         numPills[i] = Math.toIntExact(round(weight / onePillWeights[i]));
                     } else {
                         numPills[i] = MIN_VALUE;
@@ -379,7 +379,7 @@ public class HomeFragment extends Fragment{
         Cursor cursor = sqLiteDatabase.rawQuery(query, new String[]{currentDate, container});
         String time = null;
         String pillName = null;
-        if (cursor != null && cursor.getCount() > 0) {
+        if (cursor != null) {
             while (cursor.moveToNext()){
                 time = cursor.getString(0);
                 pillName = cursor.getString(1);
@@ -387,24 +387,35 @@ public class HomeFragment extends Fragment{
             checkTimeAndDeleteOrNotify(currentDate, time, pillName);
             cursor.close();
         }
+
     }
 
-    private void checkTimeAndDeleteOrNotify(String date, String time, String pillName){
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
+    private void checkTimeAndDeleteOrNotify(String date, String time, String pillName) {
+        if (time == null || time.trim().isEmpty()) {
+            Log.e("HomeFragment", "Reminder time is null or empty. Skipping deletion.");
+            return;
+        }
 
-        LocalTime reminderTime = LocalTime.parse(time, formatter);
-        LocalTime currentTime = LocalTime.now();
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
+            LocalTime reminderTime = LocalTime.parse(time, formatter);
+            LocalTime currentTime = LocalTime.now();
 
-
-        // Within reminder time -> not after +10 minutes and not before reminder time
-        if (currentTime.isAfter(reminderTime)) {
-            long result = sqLiteDatabase.delete("PillReminder", "pill_name = ? AND date = ? AND time = ?", new String[]{pillName, date, time});
-            if (result == -1) {
-                Log.e("Database", "Deletion failed");
+            // Check if current time is after reminder time
+            if (currentTime.isAfter(reminderTime)) {
+                long result = sqLiteDatabase.delete("PillReminder", "pill_name = ? AND date = ? AND time = ?", new String[]{pillName, date, time});
+                if (result == -1) {
+                    Log.e("Database", "Deletion failed for reminder: " + pillName + " at " + time + " on " + date);
+                } else {
+                    Log.d("Database", "Successfully deleted reminder: " + pillName + " at " + time + " on " + date);
+                    sharedViewModel.triggerCalendarUpdate();
+                }
             } else {
-                Log.d("Database", "Deletion successful: " + result);
-                sharedViewModel.triggerCalendarUpdate();
+                Log.d("ReminderCheck", "Reminder time not passed yet. Current time: " + currentTime + ", Reminder: " + reminderTime);
             }
+
+        } catch (Exception e) {
+            Log.e("HomeFragment", "Failed to parse reminder time: " + time, e);
         }
     }
 
