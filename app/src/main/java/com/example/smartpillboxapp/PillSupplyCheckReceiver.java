@@ -1,5 +1,7 @@
 package com.example.smartpillboxapp;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +9,8 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
+
+import java.util.Calendar;
 
 public class PillSupplyCheckReceiver extends BroadcastReceiver {
 
@@ -27,15 +31,19 @@ public class PillSupplyCheckReceiver extends BroadcastReceiver {
             if (numPills[containerNumber - 1] < threshold) {
                 containerNumbers[containerNumber - 1] = containerNumber;
                 sendNotification = true;
-            }
-            else {
+            } else {
                 containerNumbers[containerNumber - 1] = -1;
             }
         }
-        if (sendNotification){
+
+        if (sendNotification) {
             notificationHelper.sendRefillNotification(context, containerNumbers);
         }
+
         sqLiteDatabase.close();
+
+        // 🔁 Schedule next day's alarm
+        scheduleNextDailyAlarm(context);
     }
 
     private int getThreshold(SQLiteDatabase db, int containerNumber) {
@@ -56,6 +64,29 @@ public class PillSupplyCheckReceiver extends BroadcastReceiver {
         numPills[1] = sharedPreferences.getInt("pill_count_2", -1);
         numPills[2] = sharedPreferences.getInt("pill_count_3", -1);
         return numPills;
+    }
+
+    private void scheduleNextDailyAlarm(Context context) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(context, PillSupplyCheckReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 8);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.add(Calendar.DAY_OF_YEAR, 1); // Always set for tomorrow
+
+        if (alarmManager != null) {
+            alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.getTimeInMillis(),
+                    pendingIntent
+            );
+            Log.d("PillSupplyCheckReceiver", "Next daily check scheduled for: " + calendar.getTime());
+        }
     }
 
 }

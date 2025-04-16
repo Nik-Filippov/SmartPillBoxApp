@@ -345,24 +345,29 @@ public class HomeFragment extends Fragment{
         Context context = requireContext();
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, PillSupplyCheckReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        // Set the alarm to trigger at 8:00 AM every day
+        // Set the alarm for 8:00 AM
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, 8);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
-        if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
-            // If 8 AM has already passed today, schedule for tomorrow
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        // If it's past 8 AM today, set for tomorrow
+        if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
             calendar.add(Calendar.DAY_OF_YEAR, 1);
         }
 
-        // Set repeating alarm with exact and allow while idle
         if (alarmManager != null) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
+            alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
                     calendar.getTimeInMillis(),
-                    pendingIntent);
+                    pendingIntent
+            );
         }
+
 
         Log.d("HomeFragment", "Daily pill supply check scheduled for 8 AM.");
     }
