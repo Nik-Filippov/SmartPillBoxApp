@@ -220,7 +220,7 @@ public class HomeFragment extends Fragment{
                     double weight = Double.parseDouble(dataPartsStr[i]);
                     // Normalize weight to get accurate grams
                     if(i == 0){
-                        weight *= 20/37.59;
+                        weight *= 20/37.59 - 0.04;
                     } else if (i == 1){
                         weight *= 20/38.78;
                     } else if (i == 2){

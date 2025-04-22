@@ -1,5 +1,6 @@
 package com.example.smartpillboxapp;
 
+import static java.lang.Double.NaN;
 import static java.lang.Math.round;
 
 import android.app.Dialog;
@@ -11,6 +12,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
@@ -85,7 +88,17 @@ public class EditContainerInfoDialog extends DialogFragment {
 
         // Button to save one pill weight
         btnSaveWeight.setOnClickListener(v -> {
-            onePillWeight = Double.parseDouble(etOnePillWeight.getText().toString());
+            String input = etOnePillWeight.getText().toString().trim();
+            if (!input.isEmpty()) {
+                try {
+                    onePillWeight = Double.parseDouble(input);
+                } catch (NumberFormatException e) {
+                    onePillWeight = Double.NaN;
+                    etOnePillWeight.setText("");
+                }
+            } else {
+                onePillWeight = Double.NaN;
+            }
             etOnePillWeight.setEnabled(false);
         });
 

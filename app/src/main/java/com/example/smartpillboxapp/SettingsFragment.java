@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -49,6 +50,24 @@ public class SettingsFragment extends Fragment {
     private RadioButton rbTwoWeeks;
     private DatabaseHelper dbHelper;
     private SharedPreferences prefs;
+    private BluetoothDevice connectedDevice;
+
+    private final Handler connectionStatusHandler = new Handler();
+    private final Runnable connectionStatusRunnable = new Runnable() {
+        @SuppressLint("MissingPermission")
+        @Override
+        public void run() {
+            if (connectedDevice != null && bluetoothAdapter != null) {
+                if (bluetoothAdapter.getBondedDevices().contains(connectedDevice)) {
+                    tvSelectedDevice.setText("Connected to: " + connectedDevice.getName());
+                } else {
+                    tvSelectedDevice.setText("Disconnected");
+                    connectedDevice = null;
+                }
+            }
+            connectionStatusHandler.postDelayed(this, 5000);
+        }
+    };
 
     @Nullable
     @Override
@@ -64,8 +83,7 @@ public class SettingsFragment extends Fragment {
 
         if (notifyDays == 7){
             rbOneWeek.setChecked(true);
-        }
-        else {
+        } else {
             rbTwoWeeks.setChecked(true);
         }
 
@@ -93,7 +111,6 @@ public class SettingsFragment extends Fragment {
             return view;
         }
 
-        // For Android 12 and higher, request Bluetooth permissions dynamically
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
                 && ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED) {
             scanDevices();
@@ -103,6 +120,13 @@ public class SettingsFragment extends Fragment {
                     Manifest.permission.BLUETOOTH_SCAN
             }, REQUEST_BLUETOOTH_CONNECT);
         }
+
+        // Register receiver for disconnect events
+        IntentFilter disconnectFilter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        requireContext().registerReceiver(disconnectReceiver, disconnectFilter);
+
+        // Start polling for connection updates
+        connectionStatusHandler.post(connectionStatusRunnable);
 
         return view;
     }
@@ -148,17 +172,31 @@ public class SettingsFragment extends Fragment {
         }
     };
 
+    private final BroadcastReceiver disconnectReceiver = new BroadcastReceiver() {
+        @SuppressLint("MissingPermission")
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+            if (device != null && connectedDevice != null && device.getAddress().equals(connectedDevice.getAddress())) {
+                connectedDevice = null;
+                requireActivity().runOnUiThread(() -> {
+                    tvSelectedDevice.setText("Disconnected");
+                    Toast.makeText(context, "Device disconnected", Toast.LENGTH_SHORT).show();
+                });
+            }
+        }
+    };
+
     private void connectToDevice(BluetoothDevice device) {
         BluetoothManager bluetoothManager = BluetoothManager.getInstance(getContext());
         bluetoothManager.connectToDevice(device, new BluetoothManager.DataListener() {
             @Override
-            public void onDataReceived(String data) {
-                // This method is optional here
-            }
+            public void onDataReceived(String data) {}
 
             @SuppressLint("MissingPermission")
             @Override
             public void onConnected(String message) {
+                connectedDevice = device;
                 requireActivity().runOnUiThread(() -> {
                     Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
                     tvSelectedDevice.setText("Connected to: " + device.getName());
@@ -177,35 +215,36 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        requireContext().unregisterReceiver(receiver);
+        try {
+            requireContext().unregisterReceiver(receiver);
+            requireContext().unregisterReceiver(disconnectReceiver);
+        } catch (IllegalArgumentException ignored) {}
+        connectionStatusHandler.removeCallbacks(connectionStatusRunnable);
     }
 
     private void updateThreshold(){
         dbHelper = new DatabaseHelper(this.getContext(), "PillReminderDatabase", null, 1);
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-         int notifyDays = prefs.getInt("notify_days", 14);
-         Cursor cursor = db.rawQuery("SELECT id, pill_amount, recurrence FROM PillReminder", null);
+        int notifyDays = prefs.getInt("notify_days", 14);
+        Cursor cursor = db.rawQuery("SELECT id, pill_amount, recurrence FROM PillReminder", null);
         int threshold = -1;
-         if (cursor != null){
+        if (cursor != null){
             while (cursor.moveToNext()){
                 int id = cursor.getInt(0);
                 int pillCount = cursor.getInt(1);
                 String pillRecurrence = cursor.getString(2);
                 if (pillRecurrence.equals("Daily")){
                     threshold = notifyDays * pillCount;
-                }
-                else if (pillRecurrence.equals("Weekly")){
+                } else if (pillRecurrence.equals("Weekly")){
                     threshold = (notifyDays / 7) * pillCount;
-                }
-                else if (pillRecurrence.equals("Monthly")){
+                } else if (pillRecurrence.equals("Monthly")){
                     threshold = pillCount;
                 }
                 Log.d("SettingsFragment", "pillRecurrence: " + pillRecurrence);
                 Log.d("SettingsFragment", "notifyDays: " + notifyDays);
                 Log.d("SettingsFragment", "threshold: " + threshold);
-                // Update thresholds
-                ContentValues contentValues = new ContentValues();
 
+                ContentValues contentValues = new ContentValues();
                 contentValues.put("reminderThreshold", threshold);
                 db.update("PillReminder", contentValues, "id = ?", new String[]{String.valueOf(id)});
             }
@@ -213,5 +252,4 @@ public class SettingsFragment extends Fragment {
         }
         dbHelper.close();
     }
-
 }
